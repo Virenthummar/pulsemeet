@@ -139,7 +139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
     selectedCategories: [],
-    maxDistanceKm: 25,
+    maxDistanceKm: 0, // 0 = Show posts from all locations by default
     dateRange: 'all',
     onlyAvailable: false,
     viewMode: 'list',
@@ -640,8 +640,8 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
       if (!filters.selectedCategories.includes(act.category)) return false;
     }
 
-    // Distance filter
-    if (act.distanceKm && act.distanceKm > filters.maxDistanceKm) {
+    // Distance filter (Only filter if user actively set a radius > 0)
+    if (filters.maxDistanceKm > 0 && act.distanceKm && act.distanceKm > filters.maxDistanceKm) {
       return false;
     }
 
