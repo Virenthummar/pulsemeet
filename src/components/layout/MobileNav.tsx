@@ -3,8 +3,8 @@ import { Compass, Map, Plus, MessageSquare, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 interface MobileNavProps {
-  currentTab: 'explore' | 'chats' | 'profile';
-  setCurrentTab: (tab: 'explore' | 'chats' | 'profile') => void;
+  currentTab: 'explore' | 'chats' | 'profile' | 'connections' | 'settings';
+  setCurrentTab: (tab: 'explore' | 'chats' | 'profile' | 'connections' | 'settings') => void;
 }
 
 export const MobileNav: React.FC<MobileNavProps> = ({ currentTab, setCurrentTab }) => {

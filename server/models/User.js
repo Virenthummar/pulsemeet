@@ -13,7 +13,14 @@ const UserSchema = new mongoose.Schema({
   reviewsCount: { type: Number, default: 0 },
   activitiesHostedCount: { type: Number, default: 0 },
   activitiesJoinedCount: { type: Number, default: 0 },
-  joinedDate: { type: String, default: 'Today' }
+  joinedDate: { type: String, default: 'Today' },
+  lat: { type: Number },
+  lng: { type: Number },
+  notificationSettings: {
+    emailNewNearbyPosts: { type: Boolean, default: true },
+    radiusKm: { type: Number, default: 5 },
+    categories: [{ type: String }]
+  }
 }, { timestamps: true });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

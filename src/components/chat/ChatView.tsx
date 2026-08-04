@@ -4,9 +4,10 @@ import { useApp } from '../../context/AppContext';
 
 interface ChatViewProps {
   activityId: string;
+  isDirectMessage?: boolean;
 }
 
-export const ChatView: React.FC<ChatViewProps> = ({ activityId }) => {
+export const ChatView: React.FC<ChatViewProps> = ({ activityId, isDirectMessage }) => {
   const { chatMessages, sendChatMessage, currentUser, activities } = useApp();
   const [inputText, setInputText] = useState('');
 
@@ -22,7 +23,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ activityId }) => {
     setInputText('');
   };
 
-  if (!isParticipant && activity?.hostId !== currentUser.id) {
+  if (!isDirectMessage && !isParticipant && activity?.hostId !== currentUser.id) {
     return (
       <div className="py-12 text-center text-slate-400 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 space-y-3">
         <Lock className="h-8 w-8 text-slate-500 mx-auto" />
@@ -41,10 +42,10 @@ export const ChatView: React.FC<ChatViewProps> = ({ activityId }) => {
       <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
         <div className="flex items-center space-x-2">
           <MessageSquare className="h-4 w-4 text-indigo-400" />
-          <span className="font-bold text-slate-200">Activity Group Chat</span>
+          <span className="font-bold text-slate-200">{isDirectMessage ? 'Direct Message' : 'Activity Group Chat'}</span>
         </div>
         <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
-          Auto-archives 24h post event
+          {isDirectMessage ? 'End-to-End Encrypted' : 'Auto-archives 24h post event'}
         </span>
       </div>
 

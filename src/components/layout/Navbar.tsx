@@ -14,13 +14,14 @@ import {
   Moon,
   Users,
   ChevronDown,
-  UserPlus
+  UserPlus,
+  Heart
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 interface NavbarProps {
-  currentTab: 'explore' | 'chats' | 'profile';
-  setCurrentTab: (tab: 'explore' | 'chats' | 'profile') => void;
+  currentTab: 'explore' | 'chats' | 'profile' | 'connections' | 'settings';
+  setCurrentTab: (tab: 'explore' | 'chats' | 'profile' | 'connections' | 'settings') => void;
 }
 
 const CITY_PRESETS = [
@@ -163,6 +164,24 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
           {/* Right Action Icons & Dynamic User Switcher Menu */}
           <div className="flex items-center space-x-3">
             
+            {/* Chats Button (Desktop) */}
+            <button
+              onClick={() => setCurrentTab('chats')}
+              className={`hidden md:flex items-center space-x-1.5 p-2 rounded-full transition-colors ${currentTab === 'chats' ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+              title="Group Chats"
+            >
+              <MessageSquare className="h-5 w-5" />
+            </button>
+
+            {/* Connections Button (Desktop & Mobile) */}
+            <button
+              onClick={() => setCurrentTab('connections')}
+              className={`flex items-center space-x-1.5 p-2 rounded-full transition-colors relative ${currentTab === 'connections' ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+              title="Connections"
+            >
+              <Heart className="h-5 w-5" />
+            </button>
+
             {/* Create Activity Button */}
             <button
               onClick={() => setIsCreateModalOpen(true)}
@@ -230,9 +249,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
                 <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in duration-150 space-y-2 text-xs">
                   <div className="px-2 py-1 border-b border-slate-800 flex items-center justify-between">
                     <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Switch Profile</span>
-                    <button onClick={() => { setCurrentTab('profile'); setIsUserMenuOpen(false); }} className="text-indigo-400 hover:underline">
-                      View Profile
-                    </button>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setCurrentTab('settings'); setIsUserMenuOpen(false); }} className="text-indigo-400 hover:underline">
+                        Settings
+                      </button>
+                      <button onClick={() => { setCurrentTab('profile'); setIsUserMenuOpen(false); }} className="text-indigo-400 hover:underline">
+                        Profile
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-1 max-h-48 overflow-y-auto">

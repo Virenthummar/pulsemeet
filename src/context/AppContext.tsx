@@ -72,6 +72,8 @@ interface AppContextType {
   addHostReview: (hostId: string, activityId: string, rating: number, comment: string) => void;
   updateUserProfile: (updatedFields: Partial<User>) => void;
   deleteUserProfile: (userId: string) => void;
+  connections: string[];
+  submitHangoutSignal: (toUserId: string, activityId: string, wantsAgain: boolean) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -127,6 +129,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_chats');
     return saved ? JSON.parse(saved) : MOCK_CHAT_MESSAGES;
   });
+
+  const [connections, setConnections] = useState<string[]>([]);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_notifications');
@@ -187,6 +191,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_user_location', JSON.stringify(userLocation));
+    // Update currentUser with new lat/lng which will trigger the currentUser effect to save to MongoDB
+    if (currentUser && currentUser.id) {
+      setCurrentUser(prev => ({
+        ...prev,
+        lat: userLocation.lat,
+        lng: userLocation.lng
+      }));
+    }
   }, [userLocation]);
 
 const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5000/api' : '/api';
@@ -227,6 +239,12 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_user', JSON.stringify(currentUser));
+    // Persist current user to MongoDB
+    fetch(`${API_BASE_URL}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(currentUser)
+    }).catch(() => {});
   }, [currentUser]);
 
   useEffect(() => {
@@ -301,8 +319,36 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
             }
           }
         }
-      } catch (e) {
-        // MongoDB fetch failed silently — will retry on next interval
+        
+        // Fetch connections
+        const connRes = await fetch(`${API_BASE_URL}/connections/${currentUser.id}`).catch(() => null);
+        if (connRes && connRes.ok) {
+          const freshConnections: string[] = await connRes.json();
+          setConnections(prev => {
+            // Find newly matched connections to trigger local notifications
+            const newConns = freshConnections.filter(c => !prev.includes(c));
+            if (newConns.length > 0) {
+              setNotifications(nPrev => {
+                const newNotifs = newConns.map(cId => {
+                  const user = allUsers.find(u => u.id === cId) || { name: 'Someone' };
+                  return {
+                    id: `notif_match_${cId}_${Date.now()}`,
+                    userId: currentUser.id,
+                    title: 'New Connection!',
+                    message: `You and ${user.name} both want to hang out again!`,
+                    type: 'match' as const,
+                    timestamp: 'Just now',
+                    read: false
+                  };
+                });
+                return [...newNotifs, ...nPrev];
+              });
+            }
+            return freshConnections;
+          });
+        }
+      } catch (err) {
+        console.warn('Polling error:', err);
       }
     };
 
@@ -701,6 +747,50 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
     };
   });
 
+  const submitHangoutSignal = async (toUserId: string, activityId: string, wantsAgain: boolean): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/hangout-signals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: `sig_${currentUser.id}_${toUserId}_${activityId}`,
+          fromUserId: currentUser.id,
+          toUserId,
+          activityId,
+          wantsAgain,
+          createdAt: new Date().toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.isMatch) {
+        // We matched! Update local connections immediately so we don't have to wait for the poll
+        setConnections(prev => {
+          if (!prev.includes(toUserId)) return [...prev, toUserId];
+          return prev;
+        });
+        
+        const matchedUser = allUsers.find(u => u.id === toUserId) || { name: 'Someone' };
+        setNotifications(prev => [
+          {
+            id: `notif_match_${toUserId}_${Date.now()}`,
+            userId: currentUser.id,
+            title: 'New Connection!',
+            message: `You and ${matchedUser.name} both want to hang out again!`,
+            type: 'match',
+            timestamp: 'Just now',
+            read: false
+          },
+          ...prev
+        ]);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.warn('Error submitting signal', err);
+      return false;
+    }
+  };
+
   const filteredActivities = activitiesWithDynamicDistance.filter(act => {
     if (blockedUsers.includes(act.hostId)) return false;
 
@@ -798,7 +888,9 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
       blockUser,
       addHostReview,
       updateUserProfile,
-      deleteUserProfile
+      deleteUserProfile,
+      connections,
+      submitHangoutSignal
     }}>
       {children}
     </AppContext.Provider>

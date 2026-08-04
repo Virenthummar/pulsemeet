@@ -22,6 +22,13 @@ export interface User {
   activitiesHostedCount: number;
   activitiesJoinedCount: number;
   joinedDate: string;
+  lat?: number;
+  lng?: number;
+  notificationSettings?: {
+    emailNewNearbyPosts: boolean;
+    radiusKm: number;
+    categories: string[];
+  };
 }
 
 export interface ActivityParticipant {
@@ -85,7 +92,7 @@ export interface NotificationItem {
   userId: string;
   title: string;
   message: string;
-  type: 'join' | 'approval' | 'reminder' | 'waitlist' | 'chat' | 'cancelled';
+  type: 'join' | 'approval' | 'reminder' | 'waitlist' | 'chat' | 'cancelled' | 'match';
   activityId?: string;
   timestamp: string;
   read: boolean;
@@ -101,6 +108,15 @@ export interface HostReview {
   rating: number;
   comment: string;
   timestamp: string;
+}
+
+export interface HangoutSignal {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  activityId: string;
+  wantsAgain: boolean;
+  createdAt: string;
 }
 
 export interface FilterState {

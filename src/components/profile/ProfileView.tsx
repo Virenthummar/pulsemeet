@@ -11,15 +11,18 @@ import {
   Award,
   Sparkles,
   MapPin,
-  Trash2
+  Trash2,
+  Camera
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ActivityCard } from '../activity/ActivityCard';
+import { AvatarUploader } from './AvatarUploader';
 
 export const ProfileView: React.FC = () => {
   const { currentUser, activities, reviews, setIsVerificationModalOpen, setSelectedActivityId, updateUserProfile, deleteUserProfile } = useApp();
   const [activeTab, setActiveTab] = useState<'hosted' | 'joined' | 'reviews'>('hosted');
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploaderOpen, setIsUploaderOpen] = useState(false);
 
   const [editName, setEditName] = useState(currentUser.name);
   const [editBio, setEditBio] = useState(currentUser.bio);
@@ -49,14 +52,21 @@ export const ProfileView: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
           
           <div className="flex items-center space-x-4">
-            <div className="relative">
+            <div className="relative group">
               <img
                 src={currentUser.avatar}
                 alt={currentUser.name}
                 className="h-20 w-20 rounded-2xl object-cover ring-2 ring-indigo-500/40 shadow-lg"
               />
+              <button 
+                onClick={() => setIsUploaderOpen(true)}
+                className="absolute inset-0 bg-black/40 rounded-2xl flex flex-col items-center justify-center transition-opacity cursor-pointer"
+              >
+                <Camera className="h-6 w-6 text-white mb-1" />
+                <span className="text-[10px] text-white font-bold text-center leading-tight">Upload<br/>Photo</span>
+              </button>
               {currentUser.verified && (
-                <span className="absolute -bottom-1 -right-1 h-6 w-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold ring-2 ring-slate-900">
+                <span className="absolute -bottom-1 -right-1 h-6 w-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold ring-2 ring-slate-900 pointer-events-none z-10">
                   ✓
                 </span>
               )}
@@ -250,6 +260,15 @@ export const ProfileView: React.FC = () => {
         </div>
       )}
 
+      {isUploaderOpen && (
+        <AvatarUploader 
+          onSuccess={(url) => {
+            updateUserProfile({ avatar: url });
+            setIsUploaderOpen(false);
+          }}
+          onCancel={() => setIsUploaderOpen(false)}
+        />
+      )}
     </div>
   );
 };

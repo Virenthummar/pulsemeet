@@ -11,7 +11,11 @@ import { SafetyModal } from './components/safety/SafetyModal';
 import { NotificationDrawer } from './components/notifications/NotificationDrawer';
 import { OnboardingModal } from './components/auth/OnboardingModal';
 import { ChatView } from './components/chat/ChatView';
+import { ConnectionsView } from './components/connections/ConnectionsView';
+import { NotificationSettingsView } from './components/settings/NotificationSettingsView';
+import { HangoutFeedbackModal } from './components/activity/HangoutFeedbackModal';
 import { MessageSquare, Users } from 'lucide-react';
+import { Activity } from './types';
 
 export const AppContent: React.FC = () => {
   const { 
@@ -22,8 +26,26 @@ export const AppContent: React.FC = () => {
     currentUser
   } = useApp();
 
-  const [currentTab, setCurrentTab] = useState<'explore' | 'chats' | 'profile'>('explore');
+  const [currentTab, setCurrentTab] = useState<'explore' | 'chats' | 'profile' | 'connections' | 'settings'>('explore');
   const [selectedChatActivityId, setSelectedChatActivityId] = useState<string | null>(null);
+  const [activityToReview, setActivityToReview] = useState<Activity | null>(null);
+
+  // Evaluate if there are past activities to review (>24h old)
+  React.useEffect(() => {
+    const reviewed = JSON.parse(localStorage.getItem('pulse_meet_reviewed_signals') || '{}');
+    const pastUnreviewed = activities.find(act => {
+      // Must be participant or host
+      const isPart = act.hostId === currentUser.id || act.participants.some(p => p.userId === currentUser.id);
+      if (!isPart) return false;
+      if (reviewed[act.id]) return false;
+      
+      const hoursSince = (Date.now() - new Date(act.datetime).getTime()) / (1000 * 60 * 60);
+      return hoursSince >= 24; // Ended > 24h ago
+    });
+    if (pastUnreviewed) {
+      setActivityToReview(pastUnreviewed);
+    }
+  }, [activities, currentUser.id]);
 
   const joinedOrHostedActivities = activities.filter(a => 
     a.hostId === currentUser.id || a.participants.some(p => p.userId === currentUser.id)
@@ -103,6 +125,14 @@ export const AppContent: React.FC = () => {
         {currentTab === 'profile' && (
           <ProfileView />
         )}
+
+        {currentTab === 'connections' && (
+          <ConnectionsView />
+        )}
+
+        {currentTab === 'settings' && (
+          <NotificationSettingsView onBack={() => setCurrentTab('profile')} />
+        )}
       </main>
 
       {/* Sticky Bottom Nav Bar for Mobile */}
@@ -114,6 +144,12 @@ export const AppContent: React.FC = () => {
         activityId={selectedActivityId} 
         onClose={() => setSelectedActivityId(null)} 
       />
+      {activityToReview && (
+        <HangoutFeedbackModal 
+          activity={activityToReview} 
+          onClose={() => setActivityToReview(null)} 
+        />
+      )}
       <CreateActivityModal />
       <SafetyModal />
       <NotificationDrawer />

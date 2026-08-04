@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { UserCheck, Sparkles, ShieldCheck, User as UserIcon, Mail, Tag, Check, RefreshCw } from 'lucide-react';
+import { UserCheck, Sparkles, ShieldCheck, User as UserIcon, Mail, Tag, Check, RefreshCw, Camera } from 'lucide-react';
 import { useApp, getRandomAvatar } from '../../context/AppContext';
+import { AvatarUploader } from '../profile/AvatarUploader';
 
 const AVATAR_OPTIONS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
@@ -30,9 +31,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [bio, setBio] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState(() => getRandomAvatar());
+  const [selectedAvatar, setSelectedAvatar] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>(['Walking', 'Outdoors']);
   const [isVerified, setIsVerified] = useState(true);
+  const [isUploaderOpen, setIsUploaderOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -80,27 +82,33 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
           <div className="space-y-2 text-center">
             <div className="flex items-center justify-between px-2">
               <label className="font-semibold text-slate-300">Profile Photo</label>
+            </div>
+            
+            <div className="flex flex-col items-center justify-center mt-2 space-y-4">
+              <div className="relative cursor-pointer" onClick={() => setIsUploaderOpen(true)}>
+                {selectedAvatar ? (
+                  <img
+                    src={selectedAvatar}
+                    alt="avatar"
+                    className="h-24 w-24 rounded-full object-cover border-4 border-slate-800 shadow-lg opacity-60"
+                  />
+                ) : (
+                  <div className="h-24 w-24 rounded-full bg-slate-800 border-4 border-slate-700 shadow-lg flex items-center justify-center">
+                    <UserIcon className="h-10 w-10 text-slate-500" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 rounded-full flex flex-col items-center justify-center transition-opacity">
+                  <Camera className="h-6 w-6 text-white mb-1" />
+                  <span className="text-[10px] text-white font-bold text-center leading-tight px-2">Upload<br/>Photo</span>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setSelectedAvatar(getRandomAvatar())}
-                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center space-x-1"
+                onClick={() => setIsUploaderOpen(true)}
+                className="px-4 py-2 bg-slate-800 text-indigo-400 border border-indigo-500/30 rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors"
               >
-                <RefreshCw className="h-3 w-3" />
-                <span>Randomize Photo</span>
+                Choose from Gallery
               </button>
-            </div>
-            <div className="flex justify-center items-center space-x-2 overflow-x-auto pb-1">
-              {AVATAR_OPTIONS.map((url, idx) => (
-                <img
-                  key={idx}
-                  src={url}
-                  alt="avatar option"
-                  onClick={() => setSelectedAvatar(url)}
-                  className={`h-9 w-9 rounded-full object-cover cursor-pointer border-2 transition-all flex-shrink-0 ${
-                    selectedAvatar === url ? 'border-indigo-500 ring-2 ring-indigo-500/40 scale-110' : 'border-slate-700 opacity-60 hover:opacity-100'
-                  }`}
-                />
-              ))}
             </div>
           </div>
 
@@ -203,6 +211,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
         </form>
 
       </div>
+
+      {isUploaderOpen && (
+        <AvatarUploader 
+          onSuccess={(url) => {
+            setSelectedAvatar(url);
+            setIsUploaderOpen(false);
+          }}
+          onCancel={() => setIsUploaderOpen(false)}
+        />
+      )}
     </div>
   );
 };
