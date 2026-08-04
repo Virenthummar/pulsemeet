@@ -8,7 +8,9 @@ import {
   CloudRain, 
   Clock, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Trash2,
+  Edit3
 } from 'lucide-react';
 import { Activity, ActivityCategory } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -30,7 +32,7 @@ const CATEGORY_COLORS: Record<ActivityCategory, { bg: string; text: string; bord
 };
 
 export const ActivityCard: React.FC<ActivityCardProps> = ({ activity, onSelect }) => {
-  const { currentUser, joinActivity } = useApp();
+  const { currentUser, joinActivity, deleteActivity } = useApp();
 
   const isJoined = activity.participants.some(p => p.userId === currentUser.id);
   const isWaitlisted = activity.waitlist.some(p => p.userId === currentUser.id);
@@ -163,6 +165,20 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({ activity, onSelect }
             </span>
 
             {/* Quick Action Button */}
+            {isHost && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Delete "${activity.title}"? This cannot be undone.`)) {
+                    deleteActivity(activity.id);
+                  }
+                }}
+                className="text-xs font-semibold text-rose-400 hover:bg-rose-500/20 p-1.5 rounded-lg transition-colors border border-rose-500/20"
+                title="Delete Activity"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
             {isJoined ? (
               <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
                 Joined ✓

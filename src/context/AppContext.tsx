@@ -61,6 +61,8 @@ interface AppContextType {
   createActivity: (newActData: Omit<Activity, 'id' | 'hostId' | 'hostName' | 'hostAvatar' | 'hostVerified' | 'hostRating' | 'participants' | 'waitlist' | 'createdAt' | 'status'>) => void;
   joinActivity: (activityId: string) => void;
   leaveActivity: (activityId: string) => void;
+  deleteActivity: (activityId: string) => void;
+  editActivity: (activityId: string, updatedFields: Partial<Activity>) => void;
   sendChatMessage: (activityId: string, text: string) => void;
   markNotificationAsRead: (id: string) => void;
   clearAllNotifications: () => void;
@@ -451,6 +453,7 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
 
   const joinActivity = (activityId: string) => {
     let activityTitle = '';
+    let updatedActivity: Activity | null = null;
     
     setActivities(prev => prev.map(act => {
       if (act.id !== activityId) return act;
@@ -471,17 +474,21 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
       };
 
       if (isFull) {
-        return {
-          ...act,
-          waitlist: [...act.waitlist, newParticipant]
-        };
+        updatedActivity = { ...act, waitlist: [...act.waitlist, newParticipant] };
       } else {
-        return {
-          ...act,
-          participants: [...act.participants, newParticipant]
-        };
+        updatedActivity = { ...act, participants: [...act.participants, newParticipant] };
       }
+      return updatedActivity;
     }));
+
+    // Persist join to MongoDB
+    if (updatedActivity) {
+      fetch(`${API_BASE_URL}/activities/${activityId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedActivity)
+      }).catch(() => {});
+    }
 
     // Dynamically post a system log into the group chat
     sendChatMessage(activityId, `👋 ${currentUser.name} joined the hangout!`);
@@ -495,6 +502,8 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
   };
 
   const leaveActivity = (activityId: string) => {
+    let updatedActivity: Activity | null = null;
+
     setActivities(prev => prev.map(act => {
       if (act.id !== activityId) return act;
 
@@ -526,14 +535,62 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
         }
       }
 
-      return {
+      updatedActivity = {
         ...act,
         participants: finalParticipants,
         waitlist: finalWaitlist
       };
+      return updatedActivity;
     }));
 
+    // Persist leave to MongoDB
+    if (updatedActivity) {
+      fetch(`${API_BASE_URL}/activities/${activityId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedActivity)
+      }).catch(() => {});
+    }
+
     sendChatMessage(activityId, `🚶 ${currentUser.name} left the hangout.`);
+  };
+
+  // Delete activity (host only — UI enforces this)
+  const deleteActivity = (activityId: string) => {
+    setActivities(prev => prev.filter(act => act.id !== activityId));
+    setSelectedActivityId(null);
+
+    // Remove from MongoDB
+    fetch(`${API_BASE_URL}/activities/${activityId}`, {
+      method: 'DELETE'
+    }).catch(() => {});
+
+    // Clean up chat messages for this activity
+    setChatMessages(prev => {
+      const updated = { ...prev };
+      delete updated[activityId];
+      return updated;
+    });
+  };
+
+  // Edit activity (host only — UI enforces this)
+  const editActivity = (activityId: string, updatedFields: Partial<Activity>) => {
+    let updatedActivity: Activity | null = null;
+
+    setActivities(prev => prev.map(act => {
+      if (act.id !== activityId) return act;
+      updatedActivity = { ...act, ...updatedFields };
+      return updatedActivity;
+    }));
+
+    // Persist to MongoDB
+    if (updatedActivity) {
+      fetch(`${API_BASE_URL}/activities/${activityId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedActivity)
+      }).catch(() => {});
+    }
   };
 
   const sendChatMessage = (activityId: string, text: string) => {
@@ -755,6 +812,8 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
       createActivity,
       joinActivity,
       leaveActivity,
+      deleteActivity,
+      editActivity,
       sendChatMessage,
       markNotificationAsRead,
       clearAllNotifications,

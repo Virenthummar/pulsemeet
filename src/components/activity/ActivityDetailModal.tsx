@@ -17,7 +17,11 @@ import {
   Lock,
   Unlock,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Trash2,
+  Edit3,
+  Save,
+  XCircle
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ChatView } from '../chat/ChatView';
@@ -28,8 +32,13 @@ interface ActivityDetailModalProps {
 }
 
 export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activityId, onClose }) => {
-  const { activities, currentUser, joinActivity, leaveActivity, reportItem, blockUser, addHostReview } = useApp();
+  const { activities, currentUser, joinActivity, leaveActivity, deleteActivity, editActivity, reportItem, blockUser, addHostReview } = useApp();
   const [activeTab, setActiveTab] = useState<'details' | 'chat'>('details');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editDatetime, setEditDatetime] = useState('');
+  const [editMaxParticipants, setEditMaxParticipants] = useState<number | ''>('');
 
   if (!activityId) return null;
 
@@ -40,6 +49,31 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({ activi
   const isWaitlisted = activity.waitlist.some(p => p.userId === currentUser.id);
   const isHost = activity.hostId === currentUser.id;
   const isFull = activity.maxParticipants ? activity.participants.length >= activity.maxParticipants : false;
+
+  const startEditing = () => {
+    setEditTitle(activity.title);
+    setEditDescription(activity.description);
+    setEditDatetime(activity.datetime ? new Date(activity.datetime).toISOString().slice(0, 16) : '');
+    setEditMaxParticipants(activity.maxParticipants || '');
+    setIsEditing(true);
+  };
+
+  const saveEdits = () => {
+    editActivity(activity.id, {
+      title: editTitle.trim() || activity.title,
+      description: editDescription.trim() || activity.description,
+      datetime: editDatetime ? new Date(editDatetime).toISOString() : activity.datetime,
+      maxParticipants: editMaxParticipants ? Number(editMaxParticipants) : undefined
+    });
+    setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Are you sure you want to delete "${activity.title}"? This action cannot be undone.`)) {
+      deleteActivity(activity.id);
+      onClose();
+    }
+  };
 
   // Generate Google Calendar Link
   const getGoogleCalendarUrl = () => {
@@ -98,6 +132,24 @@ END:VCALENDAR`;
               {activity.category}
             </span>
             <div className="flex items-center space-x-2">
+              {isHost && (
+                <>
+                  <button
+                    onClick={startEditing}
+                    className="p-2 rounded-full bg-indigo-600/80 hover:bg-indigo-600 text-white backdrop-blur-md transition-colors"
+                    title="Edit Activity"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="p-2 rounded-full bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
+                    title="Delete Activity"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </>
+              )}
               <button
                 onClick={() => {
                   if (navigator.share) {
@@ -164,6 +216,74 @@ END:VCALENDAR`;
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {activeTab === 'details' ? (
             <>
+              {/* Inline Edit Form (Host Only) */}
+              {isEditing && isHost && (
+                <div className="bg-indigo-950/30 border border-indigo-500/30 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-indigo-400 flex items-center space-x-2">
+                      <Edit3 className="h-4 w-4" />
+                      <span>Edit Activity</span>
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={saveEdits}
+                        className="text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg transition-colors flex items-center space-x-1"
+                      >
+                        <Save className="h-3.5 w-3.5" />
+                        <span>Save</span>
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-600 transition-colors flex items-center space-x-1"
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                        <span>Cancel</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-1">Description</label>
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={3}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors resize-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1">Date & Time</label>
+                      <input
+                        type="datetime-local"
+                        value={editDatetime}
+                        onChange={(e) => setEditDatetime(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-1">Max Participants</label>
+                      <input
+                        type="number"
+                        value={editMaxParticipants}
+                        onChange={(e) => setEditMaxParticipants(e.target.value ? Number(e.target.value) : '')}
+                        min={1}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
+                        placeholder="No limit"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Host Information Card */}
               <div className="flex items-center justify-between bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
                 <div className="flex items-center space-x-3">
