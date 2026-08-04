@@ -169,7 +169,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  // Sync state to local storage
+const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/pulsemeet_v1.json';
+
+  // Helper to push state updates to shared cloud database across devices
+  const syncToCloud = async (overrideData?: any) => {
+    try {
+      const payload = overrideData || {
+        activities,
+        chatMessages,
+        reviews,
+        allUsers
+      };
+      await fetch(CLOUD_SYNC_ENDPOINT, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn('Cloud sync offline fallback');
+    }
+  };
+
+  // Sync state to local storage and trigger cloud push
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_all_users', JSON.stringify(allUsers));
   }, [allUsers]);
@@ -180,10 +201,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_activities', JSON.stringify(activities));
+    syncToCloud();
   }, [activities]);
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_chats', JSON.stringify(chatMessages));
+    syncToCloud();
   }, [chatMessages]);
 
   useEffect(() => {
@@ -192,7 +215,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_reviews', JSON.stringify(reviews));
+    syncToCloud();
   }, [reviews]);
+
+  // Real-Time Cross-Device Sync Polling Engine (Every 4 seconds)
+  useEffect(() => {
+    const fetchCloudData = async () => {
+      try {
+        const res = await fetch(CLOUD_SYNC_ENDPOINT);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data) {
+          if (data.activities && Array.isArray(data.activities)) {
+            setActivities(data.activities);
+          }
+          if (data.chatMessages) {
+            setChatMessages(data.chatMessages);
+          }
+          if (data.reviews && Array.isArray(data.reviews)) {
+            setReviews(data.reviews);
+          }
+          if (data.allUsers && Array.isArray(data.allUsers)) {
+            setAllUsers(data.allUsers);
+          }
+        }
+      } catch (e) {
+        console.warn('Cloud fetch error');
+      }
+    };
+
+    fetchCloudData();
+    const interval = setInterval(fetchCloudData, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle Browser Geolocation
   useEffect(() => {
