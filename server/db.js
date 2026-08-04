@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://pulsemeet_user:Pulsemeet2026@cluster0.mongodb.net/pulsemeet?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://virenthummar007_db_user:3QfXsdHlV3pFquCM@viren.cuz4v1i.mongodb.net/pulsemeet?retryWrites=true&w=majority';
 
 let cachedConnection = null;
 
