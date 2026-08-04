@@ -100,16 +100,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
               </div>
             </div>
 
-            {/* Dynamic Location Picker */}
-            <div className="hidden lg:flex items-center space-x-1 text-xs bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
-              <MapPin className="h-3.5 w-3.5 text-indigo-400" />
+            {/* Dynamic Location Picker (Mobile & Desktop) */}
+            <div className="flex items-center space-x-1 text-[11px] sm:text-xs bg-slate-800/80 px-2 py-1 sm:px-2.5 rounded-full border border-slate-700 max-w-[140px] sm:max-w-none">
+              <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-indigo-400 flex-shrink-0" />
               <select
                 value={userLocation.label}
                 onChange={(e) => {
                   const preset = CITY_PRESETS.find(c => c.label === e.target.value);
                   if (preset) setUserLocation(preset);
                 }}
-                className="bg-transparent text-slate-200 font-semibold text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent text-slate-200 font-semibold text-[11px] sm:text-xs focus:outline-none cursor-pointer truncate max-w-[100px] sm:max-w-none"
               >
                 {CITY_PRESETS.map(c => (
                   <option key={c.label} value={c.label} className="bg-slate-900 text-slate-200">

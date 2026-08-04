@@ -175,31 +175,34 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
   // Helper to push state updates to MongoDB Database & Cloud Sync
   const syncToCloud = async (overrideData?: any) => {
     try {
-      const payload = overrideData || {
+      const dataToPush = overrideData || {
         activities,
         chatMessages,
         reviews,
         allUsers
       };
-      // 1. Sync with MongoDB API Backend
-      fetch(`${API_BASE_URL}/activities`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(activities[0] || {})
-      }).catch(() => {});
 
-      // 2. Realtime fallback broadcast
+      // 1. Sync with MongoDB API Backend
+      if (dataToPush.activities && dataToPush.activities.length > 0) {
+        fetch(`${API_BASE_URL}/activities`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dataToPush.activities[0])
+        }).catch(() => {});
+      }
+
+      // 2. Broadcast to Realtime Database Cloud Endpoint
       await fetch(CLOUD_SYNC_ENDPOINT, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(dataToPush)
       });
     } catch (err) {
-      console.warn('Sync fallback');
+      console.warn('Sync fallback warning:', err);
     }
   };
 
-  // Sync state to local storage and trigger cloud push
+  // Sync state to local storage
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_all_users', JSON.stringify(allUsers));
   }, [allUsers]);
@@ -210,12 +213,10 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_activities', JSON.stringify(activities));
-    syncToCloud();
   }, [activities]);
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_chats', JSON.stringify(chatMessages));
-    syncToCloud();
   }, [chatMessages]);
 
   useEffect(() => {
@@ -224,48 +225,55 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_reviews', JSON.stringify(reviews));
-    syncToCloud();
   }, [reviews]);
 
-  // Real-Time MongoDB & Cross-Device Polling Engine (Every 4 seconds)
+  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 3 seconds)
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
-        // Try reading from MongoDB API first
-        const mongoRes = await fetch(`${API_BASE_URL}/activities`).catch(() => null);
-        if (mongoRes && mongoRes.ok) {
-          const mongoActs = await mongoRes.json();
-          if (Array.isArray(mongoActs) && mongoActs.length > 0) {
-            setActivities(mongoActs);
-            return;
-          }
-        }
-
-        // Fallback sync
         const res = await fetch(CLOUD_SYNC_ENDPOINT);
         if (!res.ok) return;
         const data = await res.json();
         if (data) {
-          if (data.activities && Array.isArray(data.activities)) {
-            setActivities(data.activities);
+          if (data.activities && Array.isArray(data.activities) && data.activities.length > 0) {
+            setActivities(prevLocal => {
+              const map = new Map();
+              // Cloud activities first, merged with any unsynced local activities
+              [...data.activities, ...prevLocal].forEach(act => {
+                if (act && act.id) map.set(act.id, act);
+              });
+              return Array.from(map.values());
+            });
           }
-          if (data.chatMessages) {
-            setChatMessages(data.chatMessages);
+
+          if (data.chatMessages && typeof data.chatMessages === 'object') {
+            setChatMessages(prevChats => ({
+              ...prevChats,
+              ...data.chatMessages
+            }));
           }
+
           if (data.reviews && Array.isArray(data.reviews)) {
             setReviews(data.reviews);
           }
-          if (data.allUsers && Array.isArray(data.allUsers)) {
-            setAllUsers(data.allUsers);
+
+          if (data.allUsers && Array.isArray(data.allUsers) && data.allUsers.length > 0) {
+            setAllUsers(prevUsers => {
+              const map = new Map();
+              [...data.allUsers, ...prevUsers].forEach(u => {
+                if (u && u.id) map.set(u.id, u);
+              });
+              return Array.from(map.values());
+            });
           }
         }
       } catch (e) {
-        console.warn('MongoDB fetch error');
+        console.warn('Cross-device fetch error');
       }
     };
 
     fetchCloudData();
-    const interval = setInterval(fetchCloudData, 4000);
+    const interval = setInterval(fetchCloudData, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -353,18 +361,9 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
       status: 'upcoming'
     };
 
-    setActivities(prev => [newActivity, ...prev]);
-    
-    // Dynamically update user stats
-    setCurrentUser(prev => ({
-      ...prev,
-      activitiesHostedCount: prev.activitiesHostedCount + 1
-    }));
-    setAllUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, activitiesHostedCount: u.activitiesHostedCount + 1 } : u));
-
-    // Dynamic initial welcome chat message
-    setChatMessages(prev => ({
-      ...prev,
+    const updatedActivities = [newActivity, ...activities];
+    const updatedChats = {
+      ...chatMessages,
       [newActivity.id]: [
         {
           id: `msg_sys_${Date.now()}`,
@@ -377,7 +376,27 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
           isSystem: true
         }
       ]
+    };
+
+    setActivities(updatedActivities);
+    
+    // Dynamically update user stats
+    setCurrentUser(prev => ({
+      ...prev,
+      activitiesHostedCount: prev.activitiesHostedCount + 1
     }));
+    setAllUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, activitiesHostedCount: u.activitiesHostedCount + 1 } : u));
+
+    // Dynamic initial welcome chat message
+    setChatMessages(updatedChats);
+
+    // Instant multi-device cloud broadcast
+    syncToCloud({
+      activities: updatedActivities,
+      chatMessages: updatedChats,
+      reviews,
+      allUsers
+    });
 
     setIsCreateModalOpen(false);
     setSelectedActivityId(newActivity.id);
