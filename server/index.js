@@ -30,18 +30,21 @@ app.get('/api/activities', async (req, res) => {
     const activities = await Activity.find().sort({ createdAt: -1 });
     res.json(activities);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.warn('MongoDB fetch error, returning fallback:', err.message);
+    res.json([]);
   }
 });
 
 // POST /api/activities — Create new activity in MongoDB
 app.post('/api/activities', async (req, res) => {
   try {
+    if (!req.body || !req.body.id) return res.json({ success: false });
     const newActivity = new Activity(req.body);
     await newActivity.save();
     res.status(201).json(newActivity);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.warn('MongoDB save error:', err.message);
+    res.json({ success: false, error: err.message });
   }
 });
 
