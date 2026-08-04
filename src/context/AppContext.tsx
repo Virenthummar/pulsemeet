@@ -169,9 +169,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
+const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5000/api' : '/api';
 const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/pulsemeet_v1.json';
 
-  // Helper to push state updates to shared cloud database across devices
+  // Helper to push state updates to MongoDB Database & Cloud Sync
   const syncToCloud = async (overrideData?: any) => {
     try {
       const payload = overrideData || {
@@ -180,13 +181,21 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
         reviews,
         allUsers
       };
+      // 1. Sync with MongoDB API Backend
+      fetch(`${API_BASE_URL}/activities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activities[0] || {})
+      }).catch(() => {});
+
+      // 2. Realtime fallback broadcast
       await fetch(CLOUD_SYNC_ENDPOINT, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } catch (err) {
-      console.warn('Cloud sync offline fallback');
+      console.warn('Sync fallback');
     }
   };
 
@@ -218,10 +227,21 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     syncToCloud();
   }, [reviews]);
 
-  // Real-Time Cross-Device Sync Polling Engine (Every 4 seconds)
+  // Real-Time MongoDB & Cross-Device Polling Engine (Every 4 seconds)
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
+        // Try reading from MongoDB API first
+        const mongoRes = await fetch(`${API_BASE_URL}/activities`).catch(() => null);
+        if (mongoRes && mongoRes.ok) {
+          const mongoActs = await mongoRes.json();
+          if (Array.isArray(mongoActs) && mongoActs.length > 0) {
+            setActivities(mongoActs);
+            return;
+          }
+        }
+
+        // Fallback sync
         const res = await fetch(CLOUD_SYNC_ENDPOINT);
         if (!res.ok) return;
         const data = await res.json();
@@ -240,7 +260,7 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
           }
         }
       } catch (e) {
-        console.warn('Cloud fetch error');
+        console.warn('MongoDB fetch error');
       }
     };
 
