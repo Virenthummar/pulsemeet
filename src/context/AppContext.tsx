@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   Activity, 
   User, 
@@ -97,6 +97,9 @@ export const getRandomAvatar = () => {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Track recently mutated activity IDs to prevent MongoDB poll from overwriting local changes
+  const recentlyMutatedIds = useRef<Map<string, number>>(new Map());
+
   const [allUsers, setAllUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_all_users');
     return saved ? JSON.parse(saved) : MOCK_USERS;
@@ -265,7 +268,14 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
             if (normalizedActs.length > 0) {
               setActivities(prevLocal => {
                 const map = new Map<string, Activity>();
-                normalizedActs.forEach(act => map.set(act.id, act));
+                const now = Date.now();
+                // Add MongoDB activities, but skip any that were locally mutated in the last 6s
+                normalizedActs.forEach(act => {
+                  const mutatedAt = recentlyMutatedIds.current.get(act.id);
+                  if (mutatedAt && now - mutatedAt < 6000) return; // skip — local version is fresher
+                  map.set(act.id, act);
+                });
+                // Keep all local activities that weren't overwritten by MongoDB
                 prevLocal.forEach(act => {
                   if (act && act.id && !map.has(act.id)) map.set(act.id, act);
                 });
@@ -440,6 +450,7 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
 
     // Persist join to MongoDB
     if (updatedActivity) {
+      recentlyMutatedIds.current.set(activityId, Date.now());
       fetch(`${API_BASE_URL}/activities/${activityId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -502,6 +513,7 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
 
     // Persist leave to MongoDB
     if (updatedActivity) {
+      recentlyMutatedIds.current.set(activityId, Date.now());
       fetch(`${API_BASE_URL}/activities/${activityId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -518,6 +530,7 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
     setSelectedActivityId(null);
 
     // Remove from MongoDB
+    recentlyMutatedIds.current.set(activityId, Date.now());
     fetch(`${API_BASE_URL}/activities/${activityId}`, {
       method: 'DELETE'
     }).catch(() => {});
@@ -542,6 +555,7 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
 
     // Persist to MongoDB
     if (updatedActivity) {
+      recentlyMutatedIds.current.set(activityId, Date.now());
       fetch(`${API_BASE_URL}/activities/${activityId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
