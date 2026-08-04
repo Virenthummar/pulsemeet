@@ -184,13 +184,16 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     try {
       if (!dataToPush) return;
 
-      // 1. Sync with MongoDB API Backend
+      // 1. Save activity to MongoDB Database Backend
       if (dataToPush.activities && dataToPush.activities.length > 0) {
-        fetch(`${API_BASE_URL}/activities`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dataToPush.activities[0])
-        }).catch(() => {});
+        // Send the latest post or all posts to MongoDB
+        dataToPush.activities.slice(0, 3).forEach((act: Activity) => {
+          fetch(`${API_BASE_URL}/activities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(act)
+          }).catch(() => {});
+        });
       }
 
       // 2. Broadcast to Realtime Database Cloud Endpoint
@@ -229,54 +232,70 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     localStorage.setItem(LOCAL_STORAGE_KEY + '_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
-  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 2.5 seconds)
+  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 2 seconds)
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
-        const res = await fetch(CLOUD_SYNC_ENDPOINT);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data) {
-          if (data.activities && Array.isArray(data.activities)) {
-            setActivities(prevLocal => {
-              const map = new Map();
-              // Combine cloud activities and local activities uniquely by ID
-              [...data.activities, ...prevLocal].forEach(act => {
-                if (act && act.id) map.set(act.id, act);
-              });
-              const merged = Array.from(map.values());
-              return merged;
-            });
-          }
+        // 1. Fetch live activities directly from MongoDB Database
+        const mongoRes = await fetch(`${API_BASE_URL}/activities`).catch(() => null);
+        let mongoActs: Activity[] = [];
+        if (mongoRes && mongoRes.ok) {
+          mongoActs = await mongoRes.json();
+        }
 
-          if (data.chatMessages && typeof data.chatMessages === 'object') {
-            setChatMessages(prevChats => ({
-              ...data.chatMessages,
-              ...prevChats
-            }));
-          }
+        // 2. Fetch from Cloud Broadcast Endpoint
+        const res = await fetch(CLOUD_SYNC_ENDPOINT).catch(() => null);
+        let cloudActs: Activity[] = [];
+        let cloudChats: Record<string, ChatMessage[]> = {};
+        let cloudUsers: User[] = [];
+        let cloudReviews: HostReview[] = [];
 
-          if (data.reviews && Array.isArray(data.reviews)) {
-            setReviews(data.reviews);
-          }
-
-          if (data.allUsers && Array.isArray(data.allUsers)) {
-            setAllUsers(prevUsers => {
-              const map = new Map();
-              [...data.allUsers, ...prevUsers].forEach(u => {
-                if (u && u.id) map.set(u.id, u);
-              });
-              return Array.from(map.values());
-            });
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data) {
+            if (Array.isArray(data.activities)) cloudActs = data.activities;
+            if (data.chatMessages) cloudChats = data.chatMessages;
+            if (Array.isArray(data.allUsers)) cloudUsers = data.allUsers;
+            if (Array.isArray(data.reviews)) cloudReviews = data.reviews;
           }
         }
+
+        // Merge MongoDB posts, Cloud Broadcast posts, and Local posts uniquely by ID
+        const allFetchedActs = [...mongoActs, ...cloudActs];
+        if (allFetchedActs.length > 0) {
+          setActivities(prevLocal => {
+            const map = new Map();
+            [...allFetchedActs, ...prevLocal].forEach(act => {
+              if (act && act.id) map.set(act.id, act);
+            });
+            return Array.from(map.values());
+          });
+        }
+
+        if (Object.keys(cloudChats).length > 0) {
+          setChatMessages(prev => ({ ...cloudChats, ...prev }));
+        }
+
+        if (cloudReviews.length > 0) {
+          setReviews(cloudReviews);
+        }
+
+        if (cloudUsers.length > 0) {
+          setAllUsers(prevUsers => {
+            const map = new Map();
+            [...cloudUsers, ...prevUsers].forEach(u => {
+              if (u && u.id) map.set(u.id, u);
+            });
+            return Array.from(map.values());
+          });
+        }
       } catch (e) {
-        console.warn('Cross-device fetch error');
+        console.warn('Cross-device fetch error:', e);
       }
     };
 
     fetchCloudData();
-    const interval = setInterval(fetchCloudData, 2500);
+    const interval = setInterval(fetchCloudData, 2000);
     return () => clearInterval(interval);
   }, []);
 
