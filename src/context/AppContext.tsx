@@ -436,44 +436,39 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
   };
 
   const joinActivity = (activityId: string) => {
-    let activityTitle = '';
-    let updatedActivity: Activity | null = null;
+    const act = activities.find(a => a.id === activityId);
+    if (!act) return;
     
-    setActivities(prev => prev.map(act => {
-      if (act.id !== activityId) return act;
-      
-      activityTitle = act.title;
-      const alreadyJoined = act.participants.some(p => p.userId === currentUser.id);
-      if (alreadyJoined) return act;
+    const alreadyJoined = act.participants.some(p => p.userId === currentUser.id);
+    if (alreadyJoined) return;
 
-      const isFull = act.maxParticipants ? act.participants.length >= act.maxParticipants : false;
+    const isFull = act.maxParticipants ? act.participants.length >= act.maxParticipants : false;
 
-      const newParticipant = {
-        userId: currentUser.id,
-        userName: currentUser.name,
-        userAvatar: currentUser.avatar,
-        isVerified: currentUser.verified,
-        joinedAt: new Date().toISOString(),
-        status: isFull ? ('waitlisted' as const) : ('confirmed' as const)
-      };
+    const newParticipant = {
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      isVerified: currentUser.verified,
+      joinedAt: new Date().toISOString(),
+      status: isFull ? ('waitlisted' as const) : ('confirmed' as const)
+    };
 
-      if (isFull) {
-        updatedActivity = { ...act, waitlist: [...act.waitlist, newParticipant] };
-      } else {
-        updatedActivity = { ...act, participants: [...act.participants, newParticipant] };
-      }
-      return updatedActivity;
-    }));
+    let updatedActivity: Activity;
+    if (isFull) {
+      updatedActivity = { ...act, waitlist: [...act.waitlist, newParticipant] };
+    } else {
+      updatedActivity = { ...act, participants: [...act.participants, newParticipant] };
+    }
+
+    setActivities(prev => prev.map(a => a.id === activityId ? updatedActivity : a));
 
     // Persist join to MongoDB
-    if (updatedActivity) {
-      recentlyMutatedIds.current.set(activityId, Date.now());
-      fetch(`${API_BASE_URL}/activities/${activityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedActivity)
-      }).catch(() => {});
-    }
+    recentlyMutatedIds.current.set(activityId, Date.now());
+    fetch(`${API_BASE_URL}/activities/${activityId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedActivity)
+    }).catch(() => {});
 
     // Dynamically post a system log into the group chat
     sendChatMessage(activityId, `👋 ${currentUser.name} joined the hangout!`);
@@ -487,56 +482,52 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
   };
 
   const leaveActivity = (activityId: string) => {
-    let updatedActivity: Activity | null = null;
+    const act = activities.find(a => a.id === activityId);
+    if (!act) return;
 
-    setActivities(prev => prev.map(act => {
-      if (act.id !== activityId) return act;
+    const updatedParticipants = act.participants.filter(p => p.userId !== currentUser.id);
+    const updatedWaitlist = act.waitlist.filter(p => p.userId !== currentUser.id);
+    
+    let finalParticipants = [...updatedParticipants];
+    let finalWaitlist = [...updatedWaitlist];
 
-      const updatedParticipants = act.participants.filter(p => p.userId !== currentUser.id);
-      const updatedWaitlist = act.waitlist.filter(p => p.userId !== currentUser.id);
-      
-      let finalParticipants = [...updatedParticipants];
-      let finalWaitlist = [...updatedWaitlist];
+    if (act.maxParticipants && updatedParticipants.length < act.maxParticipants && updatedWaitlist.length > 0) {
+      const [promotedUser, ...remainingWaitlist] = updatedWaitlist;
+      finalParticipants.push({ ...promotedUser, status: 'confirmed' });
+      finalWaitlist = remainingWaitlist;
 
-      if (act.maxParticipants && updatedParticipants.length < act.maxParticipants && updatedWaitlist.length > 0) {
-        const [promotedUser, ...remainingWaitlist] = updatedWaitlist;
-        finalParticipants.push({ ...promotedUser, status: 'confirmed' });
-        finalWaitlist = remainingWaitlist;
-
-        if (promotedUser.userId === currentUser.id) {
-          setNotifications(nPrev => [
-            {
-              id: `notif_${Date.now()}`,
-              userId: currentUser.id,
-              title: 'Spot Opened Up!',
-              message: `You were automatically promoted from the waitlist for "${act.title}"!`,
-              type: 'waitlist',
-              activityId: act.id,
-              timestamp: 'Just now',
-              read: false
-            },
-            ...nPrev
-          ]);
-        }
+      if (promotedUser.userId === currentUser.id) {
+        setNotifications(nPrev => [
+          {
+            id: `notif_${Date.now()}`,
+            userId: currentUser.id,
+            title: 'Spot Opened Up!',
+            message: `You were automatically promoted from the waitlist for "${act.title}"!`,
+            type: 'waitlist',
+            activityId: act.id,
+            timestamp: 'Just now',
+            read: false
+          },
+          ...nPrev
+        ]);
       }
+    }
 
-      updatedActivity = {
-        ...act,
-        participants: finalParticipants,
-        waitlist: finalWaitlist
-      };
-      return updatedActivity;
-    }));
+    const updatedActivity = {
+      ...act,
+      participants: finalParticipants,
+      waitlist: finalWaitlist
+    };
+
+    setActivities(prev => prev.map(a => a.id === activityId ? updatedActivity : a));
 
     // Persist leave to MongoDB
-    if (updatedActivity) {
-      recentlyMutatedIds.current.set(activityId, Date.now());
-      fetch(`${API_BASE_URL}/activities/${activityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedActivity)
-      }).catch(() => {});
-    }
+    recentlyMutatedIds.current.set(activityId, Date.now());
+    fetch(`${API_BASE_URL}/activities/${activityId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedActivity)
+    }).catch(() => {});
 
     sendChatMessage(activityId, `🚶 ${currentUser.name} left the hangout.`);
   };
@@ -562,23 +553,20 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
 
   // Edit activity (host only — UI enforces this)
   const editActivity = (activityId: string, updatedFields: Partial<Activity>) => {
-    let updatedActivity: Activity | null = null;
+    const act = activities.find(a => a.id === activityId);
+    if (!act) return;
+    
+    const updatedActivity = { ...act, ...updatedFields };
 
-    setActivities(prev => prev.map(act => {
-      if (act.id !== activityId) return act;
-      updatedActivity = { ...act, ...updatedFields };
-      return updatedActivity;
-    }));
+    setActivities(prev => prev.map(a => a.id === activityId ? updatedActivity : a));
 
     // Persist to MongoDB
-    if (updatedActivity) {
-      recentlyMutatedIds.current.set(activityId, Date.now());
-      fetch(`${API_BASE_URL}/activities/${activityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedActivity)
-      }).catch(() => {});
-    }
+    recentlyMutatedIds.current.set(activityId, Date.now());
+    fetch(`${API_BASE_URL}/activities/${activityId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedActivity)
+    }).catch(() => {});
   };
 
   const sendChatMessage = (activityId: string, text: string) => {
