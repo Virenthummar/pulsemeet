@@ -127,10 +127,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
 
-  const [userLocation, setUserLocation] = useState({
-    lat: 23.0225,
-    lng: 72.5714,
-    label: 'Ahmedabad, Gujarat'
+  const [userLocation, setUserLocation] = useState(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_user_location');
+    return saved ? JSON.parse(saved) : {
+      lat: 23.0225,
+      lng: 72.5714,
+      label: 'Ahmedabad, Gujarat'
+    };
   });
 
   const [filters, setFilters] = useState<FilterState>({
@@ -169,18 +172,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY + '_user_location', JSON.stringify(userLocation));
+  }, [userLocation]);
+
 const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5000/api' : '/api';
 const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/pulsemeet_v1.json';
 
   // Helper to push state updates to MongoDB Database & Cloud Sync
-  const syncToCloud = async (overrideData?: any) => {
+  const syncToCloud = async (dataToPush: any) => {
     try {
-      const dataToPush = overrideData || {
-        activities,
-        chatMessages,
-        reviews,
-        allUsers
-      };
+      if (!dataToPush) return;
 
       // 1. Sync with MongoDB API Backend
       if (dataToPush.activities && dataToPush.activities.length > 0) {
@@ -227,7 +229,7 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     localStorage.setItem(LOCAL_STORAGE_KEY + '_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
-  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 3 seconds)
+  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 2.5 seconds)
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
@@ -235,21 +237,22 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
         if (!res.ok) return;
         const data = await res.json();
         if (data) {
-          if (data.activities && Array.isArray(data.activities) && data.activities.length > 0) {
+          if (data.activities && Array.isArray(data.activities)) {
             setActivities(prevLocal => {
               const map = new Map();
-              // Cloud activities first, merged with any unsynced local activities
+              // Combine cloud activities and local activities uniquely by ID
               [...data.activities, ...prevLocal].forEach(act => {
                 if (act && act.id) map.set(act.id, act);
               });
-              return Array.from(map.values());
+              const merged = Array.from(map.values());
+              return merged;
             });
           }
 
           if (data.chatMessages && typeof data.chatMessages === 'object') {
             setChatMessages(prevChats => ({
-              ...prevChats,
-              ...data.chatMessages
+              ...data.chatMessages,
+              ...prevChats
             }));
           }
 
@@ -257,7 +260,7 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
             setReviews(data.reviews);
           }
 
-          if (data.allUsers && Array.isArray(data.allUsers) && data.allUsers.length > 0) {
+          if (data.allUsers && Array.isArray(data.allUsers)) {
             setAllUsers(prevUsers => {
               const map = new Map();
               [...data.allUsers, ...prevUsers].forEach(u => {
@@ -273,13 +276,14 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     };
 
     fetchCloudData();
-    const interval = setInterval(fetchCloudData, 3000);
+    const interval = setInterval(fetchCloudData, 2500);
     return () => clearInterval(interval);
   }, []);
 
-  // Handle Browser Geolocation
+  // Handle Browser Geolocation (Only run if user hasn't explicitly chosen a location preset)
   useEffect(() => {
-    if (navigator.geolocation) {
+    const savedLoc = localStorage.getItem(LOCAL_STORAGE_KEY + '_user_location');
+    if (!savedLoc && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setUserLocation({
@@ -288,9 +292,7 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
             label: 'Your Current GPS Location'
           });
         },
-        () => {
-          console.log('Using default location fallback');
-        }
+        () => {}
       );
     }
   }, []);
@@ -502,10 +504,19 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setChatMessages(prev => ({
-      ...prev,
-      [activityId]: [...(prev[activityId] || []), newMsg]
-    }));
+    setChatMessages(prev => {
+      const updated = {
+        ...prev,
+        [activityId]: [...(prev[activityId] || []), newMsg]
+      };
+      syncToCloud({
+        activities,
+        chatMessages: updated,
+        reviews,
+        allUsers
+      });
+      return updated;
+    });
   };
 
   const markNotificationAsRead = (id: string) => {
