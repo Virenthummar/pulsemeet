@@ -232,62 +232,88 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     localStorage.setItem(LOCAL_STORAGE_KEY + '_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
-  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 2 seconds)
+  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 3 seconds)
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
-        // 1. Fetch live activities directly from MongoDB Database
+        // PRIMARY: Fetch all activities from MongoDB Database
         const mongoRes = await fetch(`${API_BASE_URL}/activities`).catch(() => null);
-        let mongoActs: Activity[] = [];
         if (mongoRes && mongoRes.ok) {
-          mongoActs = await mongoRes.json();
-        }
+          const mongoData = await mongoRes.json();
+          if (Array.isArray(mongoData) && mongoData.length > 0) {
+            // Normalize MongoDB activities to match frontend Activity shape
+            const normalizedActs: Activity[] = mongoData
+              .filter((act: any) => act && act.id && act.title)
+              .map((act: any) => ({
+                id: act.id,
+                hostId: act.hostId || '',
+                hostName: act.hostName || 'Anonymous',
+                hostAvatar: act.hostAvatar || '',
+                hostVerified: act.hostVerified ?? false,
+                hostRating: act.hostRating ?? 5,
+                title: act.title,
+                category: act.category || 'Other',
+                description: act.description || '',
+                datetime: act.datetime || new Date().toISOString(),
+                lat: typeof act.lat === 'number' ? act.lat : 0,
+                lng: typeof act.lng === 'number' ? act.lng : 0,
+                address: act.address || '',
+                approxLocation: act.approxLocation || '',
+                exactMeetingPoint: act.exactMeetingPoint || '',
+                maxParticipants: act.maxParticipants,
+                participants: Array.isArray(act.participants) ? act.participants : [],
+                waitlist: Array.isArray(act.waitlist) ? act.waitlist : [],
+                visibility: act.visibility || 'public',
+                requiresApproval: act.requiresApproval ?? false,
+                coverImage: act.coverImage || '',
+                status: act.status || 'upcoming',
+                createdAt: act.createdAt || new Date().toISOString(),
+                weather: act.weather
+              }));
 
-        // 2. Fetch from Cloud Broadcast Endpoint
-        const res = await fetch(CLOUD_SYNC_ENDPOINT).catch(() => null);
-        let cloudActs: Activity[] = [];
-        let cloudChats: Record<string, ChatMessage[]> = {};
-        let cloudUsers: User[] = [];
-        let cloudReviews: HostReview[] = [];
-
-        if (res && res.ok) {
-          const data = await res.json();
-          if (data) {
-            if (Array.isArray(data.activities)) cloudActs = data.activities;
-            if (data.chatMessages) cloudChats = data.chatMessages;
-            if (Array.isArray(data.allUsers)) cloudUsers = data.allUsers;
-            if (Array.isArray(data.reviews)) cloudReviews = data.reviews;
+            if (normalizedActs.length > 0) {
+              setActivities(prevLocal => {
+                const map = new Map<string, Activity>();
+                // MongoDB data takes priority, then local
+                normalizedActs.forEach(act => map.set(act.id, act));
+                prevLocal.forEach(act => {
+                  if (act && act.id && !map.has(act.id)) map.set(act.id, act);
+                });
+                return Array.from(map.values());
+              });
+            }
           }
         }
 
-        // Merge MongoDB posts, Cloud Broadcast posts, and Local posts uniquely by ID
-        const allFetchedActs = [...mongoActs, ...cloudActs];
-        if (allFetchedActs.length > 0) {
-          setActivities(prevLocal => {
-            const map = new Map();
-            [...allFetchedActs, ...prevLocal].forEach(act => {
-              if (act && act.id) map.set(act.id, act);
-            });
-            return Array.from(map.values());
-          });
-        }
-
-        if (Object.keys(cloudChats).length > 0) {
-          setChatMessages(prev => ({ ...cloudChats, ...prev }));
-        }
-
-        if (cloudReviews.length > 0) {
-          setReviews(cloudReviews);
-        }
-
-        if (cloudUsers.length > 0) {
-          setAllUsers(prevUsers => {
-            const map = new Map();
-            [...cloudUsers, ...prevUsers].forEach(u => {
-              if (u && u.id) map.set(u.id, u);
-            });
-            return Array.from(map.values());
-          });
+        // SECONDARY (best-effort): Fetch from Firebase Cloud Broadcast for chat/user/review data
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        try {
+          const res = await fetch(CLOUD_SYNC_ENDPOINT, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data) {
+              if (data.chatMessages && typeof data.chatMessages === 'object') {
+                setChatMessages(prev => ({ ...data.chatMessages, ...prev }));
+              }
+              if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+                setReviews(data.reviews);
+              }
+              if (Array.isArray(data.allUsers) && data.allUsers.length > 0) {
+                setAllUsers(prevUsers => {
+                  const map = new Map();
+                  [...data.allUsers, ...prevUsers].forEach(u => {
+                    if (u && u.id) map.set(u.id, u);
+                  });
+                  return Array.from(map.values());
+                });
+              }
+            }
+          }
+        } catch {
+          clearTimeout(timeout);
+          // Firebase unavailable — MongoDB is the primary source, this is fine
         }
       } catch (e) {
         console.warn('Cross-device fetch error:', e);
@@ -295,7 +321,7 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     };
 
     fetchCloudData();
-    const interval = setInterval(fetchCloudData, 2000);
+    const interval = setInterval(fetchCloudData, 3000);
     return () => clearInterval(interval);
   }, []);
 

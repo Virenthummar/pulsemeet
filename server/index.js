@@ -27,21 +27,46 @@ app.use(async (req, res, next) => {
 // GET /api/activities — Fetch all activities from MongoDB
 app.get('/api/activities', async (req, res) => {
   try {
-    const activities = await Activity.find().sort({ createdAt: -1 });
-    res.json(activities);
+    const activities = await Activity.find().sort({ createdAt: -1 }).lean();
+    // Strip Mongoose internal fields so frontend Activity type matches cleanly
+    const cleaned = activities.map(act => {
+      const { _id, __v, ...rest } = act;
+      // Ensure createdAt is a string
+      if (rest.createdAt instanceof Date) rest.createdAt = rest.createdAt.toISOString();
+      if (rest.updatedAt instanceof Date) rest.updatedAt = rest.updatedAt.toISOString();
+      // Clean _id from nested participants/waitlist arrays
+      if (Array.isArray(rest.participants)) {
+        rest.participants = rest.participants.map(p => {
+          const { _id: pId, ...pRest } = p;
+          return pRest;
+        });
+      }
+      if (Array.isArray(rest.waitlist)) {
+        rest.waitlist = rest.waitlist.map(w => {
+          const { _id: wId, ...wRest } = w;
+          return wRest;
+        });
+      }
+      return rest;
+    });
+    res.json(cleaned);
   } catch (err) {
     console.warn('MongoDB fetch error, returning fallback:', err.message);
     res.json([]);
   }
 });
 
-// POST /api/activities — Create new activity in MongoDB
+// POST /api/activities — Create or update activity in MongoDB (upsert to prevent duplicate key errors)
 app.post('/api/activities', async (req, res) => {
   try {
     if (!req.body || !req.body.id) return res.json({ success: false });
-    const newActivity = new Activity(req.body);
-    await newActivity.save();
-    res.status(201).json(newActivity);
+    // Use findOneAndUpdate with upsert to handle both new and existing activities
+    const saved = await Activity.findOneAndUpdate(
+      { id: req.body.id },
+      req.body,
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    res.status(201).json(saved);
   } catch (err) {
     console.warn('MongoDB save error:', err.message);
     res.json({ success: false, error: err.message });
