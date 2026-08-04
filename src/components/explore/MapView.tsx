@@ -77,7 +77,7 @@ export const MapView: React.FC<MapViewProps> = ({ activities, onSelectActivity }
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {r}km
+              {r >= 50 ? '50+km (All)' : `${r}km`}
             </button>
           ))}
         </div>

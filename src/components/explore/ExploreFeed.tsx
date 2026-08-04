@@ -108,7 +108,9 @@ export const ExploreFeed: React.FC<ExploreFeedProps> = ({ onSelectActivity }) =>
               onChange={(e) => setFilters(prev => ({ ...prev, maxDistanceKm: Number(e.target.value) }))}
               className="w-24 accent-indigo-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
             />
-            <span className="font-bold text-indigo-400">{filters.maxDistanceKm} km</span>
+            <span className="font-bold text-indigo-400">
+              {filters.maxDistanceKm >= 50 ? '50+ km (All)' : `${filters.maxDistanceKm} km`}
+            </span>
           </div>
         </div>
 

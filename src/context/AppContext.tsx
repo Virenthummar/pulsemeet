@@ -144,7 +144,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
     selectedCategories: [],
-    maxDistanceKm: 0, // 0 = Show posts from all locations by default
+    maxDistanceKm: 50, // 50 = 50+ km (Unlimited)
     dateRange: 'all',
     onlyAvailable: false,
     viewMode: 'list',
@@ -727,8 +727,8 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
       if (!filters.selectedCategories.includes(act.category)) return false;
     }
 
-    // Distance filter (Only filter if user actively set a radius > 0)
-    if (filters.maxDistanceKm > 0 && act.distanceKm && act.distanceKm > filters.maxDistanceKm) {
+    // Distance filter (50 means 50+ km / unlimited)
+    if (filters.maxDistanceKm > 0 && filters.maxDistanceKm < 50 && act.distanceKm !== undefined && act.distanceKm > filters.maxDistanceKm) {
       return false;
     }
 
