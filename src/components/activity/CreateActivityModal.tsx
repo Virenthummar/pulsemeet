@@ -1,7 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus, MapPin, Calendar, Clock, Image, ShieldAlert, Sparkles, Users } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { ActivityCategory } from '../../types';
 import { useApp } from '../../context/AppContext';
+
+// Fix default Leaflet icon paths
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Component to handle map clicks
+const LocationPicker: React.FC<{
+  position: { lat: number; lng: number };
+  setPosition: (pos: { lat: number; lng: number }) => void;
+}> = ({ position, setPosition }) => {
+  useMapEvents({
+    click(e) {
+      setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
+    }
+  });
+  return <Marker position={position} />;
+};
+
+// Component to dynamically re-center map if user location changes
+const RecenterMap: React.FC<{ lat: number; lng: number }> = ({ lat, lng }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng]);
+  }, [lat, lng, map]);
+  return null;
+};
 
 const SAMPLE_COVERS = [
   { name: 'Park Stroll', url: 'https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?auto=format&fit=crop&q=80&w=800' },
@@ -20,11 +52,24 @@ export const CreateActivityModal: React.FC = () => {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [address, setAddress] = useState('Sabarmati Riverfront, Ahmedabad');
-  const [exactMeetingPoint, setExactMeetingPoint] = useState('Near Event Centre Pier Entrance');
+  const [address, setAddress] = useState(userLocation.label || 'Your Location');
+  const [exactMeetingPoint, setExactMeetingPoint] = useState('');
   const [maxParticipants, setMaxParticipants] = useState<number | ''>(6);
   const [visibility, setVisibility] = useState<'public' | 'invite_only'>('public');
   const [coverImage, setCoverImage] = useState(SAMPLE_COVERS[0].url);
+  
+  const [selectedLocation, setSelectedLocation] = useState<{lat: number, lng: number}>({ 
+    lat: userLocation.lat, 
+    lng: userLocation.lng 
+  });
+
+  // Keep map center synced with userLocation preset if modal is opened in a new city
+  useEffect(() => {
+    if (isCreateModalOpen) {
+      setSelectedLocation({ lat: userLocation.lat, lng: userLocation.lng });
+      setAddress(userLocation.label || 'Your Location');
+    }
+  }, [userLocation, isCreateModalOpen]);
 
   if (!isCreateModalOpen) return null;
 
@@ -42,10 +87,10 @@ export const CreateActivityModal: React.FC = () => {
       category,
       description,
       datetime: datetimeStr,
-      lat: userLocation.lat + (Math.random() - 0.5) * 0.02,
-      lng: userLocation.lng + (Math.random() - 0.5) * 0.02,
+      lat: selectedLocation.lat,
+      lng: selectedLocation.lng,
       address,
-      approxLocation: `${address.split(',')[0]} (~0.5 km away)`,
+      approxLocation: address.split(',')[0].trim(),
       exactMeetingPoint,
       maxParticipants: maxParticipants === '' ? undefined : Number(maxParticipants),
       visibility,
@@ -180,6 +225,27 @@ export const CreateActivityModal: React.FC = () => {
                 onChange={(e) => setExactMeetingPoint(e.target.value)}
                 className="w-full bg-slate-800/80 text-slate-200 placeholder-slate-500 text-xs rounded-xl p-3 border border-indigo-500/40 focus:outline-none focus:border-indigo-500"
               />
+            </div>
+            
+            <div className="space-y-2 pt-2">
+              <label className="font-semibold text-slate-300 flex items-center justify-between">
+                <span>Pinpoint Exact Location on Map *</span>
+                <span className="text-xs font-normal text-slate-400">Click to place marker</span>
+              </label>
+              <div className="h-48 w-full rounded-xl overflow-hidden border border-slate-700 relative z-0">
+                <MapContainer
+                  center={[selectedLocation.lat, selectedLocation.lng]}
+                  zoom={14}
+                  className="h-full w-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  />
+                  <RecenterMap lat={userLocation.lat} lng={userLocation.lng} />
+                  <LocationPicker position={selectedLocation} setPosition={setSelectedLocation} />
+                </MapContainer>
+              </div>
             </div>
           </div>
 
