@@ -107,7 +107,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [currentUser, setCurrentUser] = useState<User>(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_user');
-    return saved ? JSON.parse(saved) : MOCK_USERS[0];
+    if (saved) return JSON.parse(saved);
+
+    // Generate a truly unique mock user ID for each new device/browser
+    const freshId = `usr_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
+    const freshUser = { ...MOCK_USERS[0], id: freshId };
+    
+    // Auto-save the new unique user so it persists
+    localStorage.setItem(LOCAL_STORAGE_KEY + '_user', JSON.stringify(freshUser));
+    return freshUser;
   });
 
   const [activities, setActivities] = useState<Activity[]>(() => {
@@ -204,6 +212,15 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
   };
 
   // Sync state to local storage
+  useEffect(() => {
+    setAllUsers(prev => {
+      if (!prev.some(u => u.id === currentUser.id)) {
+        return [...prev, currentUser];
+      }
+      return prev;
+    });
+  }, [currentUser]);
+
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY + '_all_users', JSON.stringify(allUsers));
   }, [allUsers]);
@@ -668,7 +685,7 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
         setCurrentUser(remainingUsers[0]);
       } else {
         const freshUser: User = {
-          id: 'usr_me',
+          id: `usr_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`,
           name: 'New User',
           email: 'user@pulsemeet.app',
           bio: '',
