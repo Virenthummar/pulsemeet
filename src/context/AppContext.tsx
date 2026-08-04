@@ -671,6 +671,20 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
   const filteredActivities = activitiesWithDynamicDistance.filter(act => {
     if (blockedUsers.includes(act.hostId)) return false;
 
+    // City filter — only show activities matching the user's selected city
+    // Extract city name from label like "Anand, Gujarat" → "Anand"
+    const selectedLabel = userLocation.label || '';
+    const isGPSLocation = selectedLabel === 'Your Current GPS Location' || selectedLabel === '';
+    if (!isGPSLocation && selectedLabel) {
+      const cityName = selectedLabel.split(',')[0].trim().toLowerCase();
+      const actAddress = (act.address || '').toLowerCase();
+      const actApproxLoc = (act.approxLocation || '').toLowerCase();
+      // Show activity only if it belongs to the selected city
+      if (!actAddress.includes(cityName) && !actApproxLoc.includes(cityName)) {
+        return false;
+      }
+    }
+
     // Search query
     if (filters.searchQuery) {
       const q = filters.searchQuery.toLowerCase();
@@ -706,8 +720,10 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     if (filters.sortBy === 'popular') {
       return b.participants.length - a.participants.length;
     }
-    // Default 'soonest'
-    return new Date(a.datetime).getTime() - new Date(b.datetime).getTime();
+    // Default 'soonest' — nearest time first, then nearest distance
+    const timeDiff = new Date(a.datetime).getTime() - new Date(b.datetime).getTime();
+    if (timeDiff !== 0) return timeDiff;
+    return (a.distanceKm || 0) - (b.distanceKm || 0);
   });
 
   return (
