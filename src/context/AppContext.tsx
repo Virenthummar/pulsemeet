@@ -179,16 +179,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [userLocation]);
 
 const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://localhost:5000/api' : '/api';
-const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/pulsemeet_v1.json';
 
-  // Helper to push state updates to MongoDB Database & Cloud Sync
+  // Helper to push state updates to MongoDB Database
   const syncToCloud = async (dataToPush: any) => {
     try {
       if (!dataToPush) return;
 
-      // 1. Save activity to MongoDB Database Backend
+      // Save activities to MongoDB Database Backend
       if (dataToPush.activities && dataToPush.activities.length > 0) {
-        // Send the latest post or all posts to MongoDB
         dataToPush.activities.slice(0, 3).forEach((act: Activity) => {
           fetch(`${API_BASE_URL}/activities`, {
             method: 'POST',
@@ -197,15 +195,8 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
           }).catch(() => {});
         });
       }
-
-      // 2. Broadcast to Realtime Database Cloud Endpoint
-      await fetch(CLOUD_SYNC_ENDPOINT, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToPush)
-      });
     } catch (err) {
-      console.warn('Sync fallback warning:', err);
+      console.warn('Sync warning:', err);
     }
   };
 
@@ -234,16 +225,14 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
     localStorage.setItem(LOCAL_STORAGE_KEY + '_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
-  // Real-Time Cross-Device Sync Polling & Merge Engine (Every 3 seconds)
+  // Real-Time Cross-Device Sync Polling from MongoDB (Every 3 seconds)
   useEffect(() => {
-    const fetchCloudData = async () => {
+    const fetchFromMongoDB = async () => {
       try {
-        // PRIMARY: Fetch all activities from MongoDB Database
         const mongoRes = await fetch(`${API_BASE_URL}/activities`).catch(() => null);
         if (mongoRes && mongoRes.ok) {
           const mongoData = await mongoRes.json();
           if (Array.isArray(mongoData) && mongoData.length > 0) {
-            // Normalize MongoDB activities to match frontend Activity shape
             const normalizedActs: Activity[] = mongoData
               .filter((act: any) => act && act.id && act.title)
               .map((act: any) => ({
@@ -276,7 +265,6 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
             if (normalizedActs.length > 0) {
               setActivities(prevLocal => {
                 const map = new Map<string, Activity>();
-                // MongoDB data takes priority, then local
                 normalizedActs.forEach(act => map.set(act.id, act));
                 prevLocal.forEach(act => {
                   if (act && act.id && !map.has(act.id)) map.set(act.id, act);
@@ -286,44 +274,13 @@ const CLOUD_SYNC_ENDPOINT = 'https://pulsemeet-app-default-rtdb.firebaseio.com/p
             }
           }
         }
-
-        // SECONDARY (best-effort): Fetch from Firebase Cloud Broadcast for chat/user/review data
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
-        try {
-          const res = await fetch(CLOUD_SYNC_ENDPOINT, { signal: controller.signal });
-          clearTimeout(timeout);
-          if (res && res.ok) {
-            const data = await res.json();
-            if (data) {
-              if (data.chatMessages && typeof data.chatMessages === 'object') {
-                setChatMessages(prev => ({ ...data.chatMessages, ...prev }));
-              }
-              if (Array.isArray(data.reviews) && data.reviews.length > 0) {
-                setReviews(data.reviews);
-              }
-              if (Array.isArray(data.allUsers) && data.allUsers.length > 0) {
-                setAllUsers(prevUsers => {
-                  const map = new Map();
-                  [...data.allUsers, ...prevUsers].forEach(u => {
-                    if (u && u.id) map.set(u.id, u);
-                  });
-                  return Array.from(map.values());
-                });
-              }
-            }
-          }
-        } catch {
-          clearTimeout(timeout);
-          // Firebase unavailable — MongoDB is the primary source, this is fine
-        }
       } catch (e) {
-        console.warn('Cross-device fetch error:', e);
+        // MongoDB fetch failed silently — will retry on next interval
       }
     };
 
-    fetchCloudData();
-    const interval = setInterval(fetchCloudData, 3000);
+    fetchFromMongoDB();
+    const interval = setInterval(fetchFromMongoDB, 3000);
     return () => clearInterval(interval);
   }, []);
 
