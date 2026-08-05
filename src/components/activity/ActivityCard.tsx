@@ -49,7 +49,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({ activity, onSelect }
   return (
     <div 
       onClick={() => onSelect(activity.id)}
-      className="group relative bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl overflow-hidden shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
+      className="group relative glass-card card-3d glow-border rounded-2xl overflow-hidden shadow-xl transition-all duration-300 transform cursor-pointer flex flex-col justify-between"
     >
       
       {/* Top Image Section */}

@@ -48,8 +48,8 @@ export const ProfileView: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       
       {/* Profile Banner & Info Header */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="glass-panel border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 h-56 w-56 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
           

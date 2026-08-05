@@ -14,6 +14,7 @@ import { ChatView } from './components/chat/ChatView';
 import { ConnectionsView } from './components/connections/ConnectionsView';
 import { NotificationSettingsView } from './components/settings/NotificationSettingsView';
 import { HangoutFeedbackModal } from './components/activity/HangoutFeedbackModal';
+import { ThreeBackground } from './components/common/ThreeBackground';
 import { MessageSquare, Users } from 'lucide-react';
 import { Activity } from './types';
 
@@ -52,13 +53,22 @@ export const AppContent: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen transition-colors duration-300 flex flex-col selection:bg-indigo-500 selection:text-white">
+    <div className="relative min-h-screen transition-colors duration-300 flex flex-col selection:bg-indigo-500 selection:text-white overflow-x-hidden">
       
+      {/* 3D Interactive Three.js Background */}
+      <ThreeBackground />
+
+      {/* Ambient Radial Mesh Glows */}
+      <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none z-0 animate-pulse-glow" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-pink-600/15 rounded-full blur-[140px] pointer-events-none z-0 animate-pulse-glow" style={{ animationDelay: '2s' }} />
+
       {/* Top Header Navbar */}
-      <Navbar currentTab={currentTab} setCurrentTab={setCurrentTab} />
+      <div className="relative z-20">
+        <Navbar currentTab={currentTab} setCurrentTab={setCurrentTab} />
+      </div>
 
       {/* Main Page Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
         {currentTab === 'explore' && (
           filters.viewMode === 'list' ? (
             <ExploreFeed onSelectActivity={setSelectedActivityId} />

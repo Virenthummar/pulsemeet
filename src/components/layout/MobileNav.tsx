@@ -14,7 +14,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ currentTab, setCurrentTab 
   const totalChatCount = Object.keys(chatMessages).length;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/80 px-4 py-2 shadow-2xl">
+    <nav className="md:hidden fixed bottom-3 left-3 right-3 z-40 glass-panel rounded-3xl px-4 py-2.5 shadow-2xl border border-slate-800/80">
       <div className="flex items-center justify-between max-w-md mx-auto">
         
         {/* Explore Feed */}

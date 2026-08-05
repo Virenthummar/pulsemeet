@@ -77,7 +77,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 shadow-lg">
+    <header className="sticky top-0 z-40 glass-panel border-b border-slate-800/80 shadow-2xl transition-all">
+      <div className="h-[2px] w-full bg-gradient-to-r from-indigo-500 via-pink-500 to-cyan-500 animate-pulse-glow" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           

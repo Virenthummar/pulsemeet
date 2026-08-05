@@ -54,16 +54,44 @@ export const ExploreFeed: React.FC<ExploreFeedProps> = ({ onSelectActivity }) =>
   };
 
   return (
-    <div className="space-[#10] space-y-6">
+    <div className="space-y-6">
       
+      {/* Hero Header Section */}
+      <div className="relative glass-panel rounded-3xl p-6 sm:p-8 overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Hyperlocal Meetups & Activities</span>
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+              Discover <span className="bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">Real People & Local Vibes</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-xl">
+              Connect with verified hosts and join spontaneous walks, games, sports, or coffee hangouts happening near you right now.
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Host an Activity</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Category Pills Bar */}
       <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none">
         <button
           onClick={() => setFilters(prev => ({ ...prev, selectedCategories: [] }))}
-          className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+          className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
             filters.selectedCategories.length === 0
-              ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-              : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30 scale-105'
+              : 'glass-panel text-slate-400 hover:text-slate-200 hover:border-slate-700'
           }`}
         >
           <Sparkles className="h-3.5 w-3.5" />
@@ -76,10 +104,10 @@ export const ExploreFeed: React.FC<ExploreFeedProps> = ({ onSelectActivity }) =>
             <button
               key={cat}
               onClick={() => toggleCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
                 isSelected
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-                  : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30 scale-105'
+                  : 'glass-panel text-slate-400 hover:text-slate-200 hover:border-slate-700'
               }`}
             >
               {cat}
@@ -89,7 +117,7 @@ export const ExploreFeed: React.FC<ExploreFeedProps> = ({ onSelectActivity }) =>
       </div>
 
       {/* Filter Options Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 glass-panel p-3.5 rounded-2xl border border-slate-800/80 shadow-lg">
         
         {/* Left: Distance & Location info */}
         <div className="flex items-center space-x-3 text-xs text-slate-300">
