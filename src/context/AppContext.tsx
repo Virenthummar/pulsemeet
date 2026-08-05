@@ -305,19 +305,42 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
 
             if (normalizedActs.length > 0) {
               setActivities(prevLocal => {
-                const map = new Map<string, Activity>();
+                const prevMap = new Map<string, Activity>(prevLocal.map(a => [a.id, a]));
                 const now = Date.now();
-                // Add MongoDB activities, but skip any that were locally mutated in the last 6s
-                normalizedActs.forEach(act => {
-                  const mutatedAt = recentlyMutatedIds.current.get(act.id);
-                  if (mutatedAt && now - mutatedAt < 6000) return; // skip — local version is fresher
-                  map.set(act.id, act);
+
+                const merged = normalizedActs.map(mongoAct => {
+                  const localAct = prevMap.get(mongoAct.id);
+                  if (!localAct) return mongoAct;
+
+                  const mutatedAt = recentlyMutatedIds.current.get(mongoAct.id);
+                  if (mutatedAt && now - mutatedAt < 30000) {
+                    // Local version is fresher — preserve user actions
+                    return localAct;
+                  }
+
+                  // Check if currentUser joined locally
+                  const localJoinedUser = localAct.participants.find(p => p.userId === currentUser.id);
+                  const mongoHasUser = mongoAct.participants.some(p => p.userId === currentUser.id);
+
+                  if (localJoinedUser && !mongoHasUser) {
+                    // Preserve local user participant state so polling never kicks them out!
+                    return {
+                      ...mongoAct,
+                      participants: [...mongoAct.participants, localJoinedUser]
+                    };
+                  }
+
+                  return mongoAct;
                 });
-                // Keep all local activities that weren't overwritten by MongoDB
-                prevLocal.forEach(act => {
-                  if (act && act.id && !map.has(act.id)) map.set(act.id, act);
+
+                // Retain any activities created locally that aren't in MongoDB yet
+                prevLocal.forEach(localAct => {
+                  if (!merged.some(m => m.id === localAct.id)) {
+                    merged.push(localAct);
+                  }
                 });
-                return Array.from(map.values());
+
+                return merged;
               });
             }
           }
@@ -511,8 +534,13 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
 
     setActivities(prev => prev.map(a => a.id === activityId ? updatedActivity : a));
 
-    // Persist join to MongoDB
+    // Persist join to MongoDB (both POST upsert and PUT for max reliability)
     recentlyMutatedIds.current.set(activityId, Date.now());
+    fetch(`${API_BASE_URL}/activities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedActivity)
+    }).catch(() => {});
     fetch(`${API_BASE_URL}/activities/${activityId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
