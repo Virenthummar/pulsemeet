@@ -16,7 +16,7 @@ export const ThreeBackground: React.FC = () => {
       0.1,
       1000
     );
-    camera.position.z = 35;
+    camera.position.z = 32;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -28,49 +28,242 @@ export const ThreeBackground: React.FC = () => {
     renderer.domElement.style.zIndex = '0';
     container.appendChild(renderer.domElement);
 
-    // Canvas texture generator for glowing star particles
-    const createStarTexture = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 32;
-      canvas.height = 32;
-      const ctx = canvas.getContext('2d');
+    const textureLoader = new THREE.TextureLoader();
+
+    // Helper: Create High-Res Canvas Textures if external textures fail or loading
+    const createSunTexture = () => {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
       if (ctx) {
-        const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        grad.addColorStop(0.2, 'rgba(224, 242, 254, 0.9)');
-        grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.4)');
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 32, 32);
+        const g = ctx.createRadialGradient(256, 256, 10, 256, 256, 256);
+        g.addColorStop(0, '#fffbeb');
+        g.addColorStop(0.2, '#fde047');
+        g.addColorStop(0.5, '#f97316');
+        g.addColorStop(0.8, '#dc2626');
+        g.addColorStop(1, '#7f1d1d');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Solar surface flares
+        for (let i = 0; i < 300; i++) {
+          ctx.fillStyle = `rgba(255, 230, 150, ${Math.random() * 0.4})`;
+          ctx.beginPath();
+          ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 12, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
-      return new THREE.CanvasTexture(canvas);
+      return new THREE.CanvasTexture(c);
     };
 
-    const starTexture = createStarTexture();
+    const createEarthTexture = () => {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        // Deep blue ocean
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 512, 256);
 
-    // 1. Distant Star Field (2500 Stars)
-    const starCount = window.innerWidth < 768 ? 1200 : 2800;
+        // Water gradients
+        const g = ctx.createLinearGradient(0, 0, 512, 256);
+        g.addColorStop(0, '#1e3a8a');
+        g.addColorStop(0.5, '#0284c7');
+        g.addColorStop(1, '#0f766e');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 512, 256);
+
+        // Continent landmass shapes
+        ctx.fillStyle = '#15803d';
+        for (let i = 0; i < 45; i++) {
+          ctx.beginPath();
+          ctx.ellipse(Math.random() * 512, Math.random() * 256, 20 + Math.random() * 40, 15 + Math.random() * 30, Math.random(), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // White cloud swirls
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        for (let i = 0; i < 60; i++) {
+          ctx.beginPath();
+          ctx.ellipse(Math.random() * 512, Math.random() * 256, 30 + Math.random() * 50, 5 + Math.random() * 12, Math.random(), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      return new THREE.CanvasTexture(c);
+    };
+
+    const createJupiterTexture = () => {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        // Jupiter atmospheric bands
+        const bandColors = ['#9a3412', '#c2410c', '#ea580c', '#fed7aa', '#78350f', '#f97316', '#fdba74', '#9a3412'];
+        for (let y = 0; y < 256; y += 8) {
+          ctx.fillStyle = bandColors[Math.floor((y / 256) * bandColors.length)];
+          ctx.fillRect(0, y, 512, 8 + Math.random() * 4);
+        }
+        // Great Red Spot
+        ctx.fillStyle = '#b91c1c';
+        ctx.beginPath();
+        ctx.ellipse(320, 160, 35, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return new THREE.CanvasTexture(c);
+    };
+
+    const createSaturnTexture = () => {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        const g = ctx.createLinearGradient(0, 0, 0, 256);
+        g.addColorStop(0, '#fef08a');
+        g.addColorStop(0.3, '#f59e0b');
+        g.addColorStop(0.6, '#d97706');
+        g.addColorStop(1, '#b45309');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 512, 256);
+      }
+      return new THREE.CanvasTexture(c);
+    };
+
+    const createSaturnRingTexture = () => {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        const g = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(0.4, 'rgba(251, 191, 36, 0.7)');
+        g.addColorStop(0.6, 'rgba(217, 119, 6, 0.8)');
+        g.addColorStop(0.75, 'rgba(180, 83, 9, 0.4)');
+        g.addColorStop(0.9, 'rgba(245, 158, 11, 0.6)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 256, 256);
+      }
+      return new THREE.CanvasTexture(c);
+    };
+
+    // Textures initialization (with Canvas fallback for instant 60fps load)
+    const sunTexture = createSunTexture();
+    const earthTexture = createEarthTexture();
+    const jupiterTexture = createJupiterTexture();
+    const saturnTexture = createSaturnTexture();
+    const saturnRingTexture = createSaturnRingTexture();
+
+    // Load High-Res NASA / Space Photos where available
+    textureLoader.load(
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
+      (tex) => { earthMat.map = tex; earthMat.needsUpdate = true; }
+    );
+    textureLoader.load(
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/jupiter.jpg',
+      (tex) => { jupiterMat.map = tex; jupiterMat.needsUpdate = true; }
+    );
+
+    // 1. REAL 3D SUN (Blazing Celestial Body)
+    const sunGeo = new THREE.SphereGeometry(6, 48, 48);
+    const sunMat = new THREE.MeshBasicMaterial({
+      map: sunTexture
+    });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    sun.position.set(-25, 14, -20);
+    scene.add(sun);
+
+    // Sun Outer Corona Atmosphere Glow
+    const sunGlowGeo = new THREE.SphereGeometry(7.2, 32, 32);
+    const sunGlowMat = new THREE.MeshBasicMaterial({
+      color: 0xf97316,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.BackSide
+    });
+    const sunGlow = new THREE.Mesh(sunGlowGeo, sunGlowMat);
+    sun.add(sunGlow);
+
+    // 2. REAL 3D EARTH (Blue Marble)
+    const earthGeo = new THREE.SphereGeometry(3.8, 48, 48);
+    const earthMat = new THREE.MeshStandardMaterial({
+      map: earthTexture,
+      roughness: 0.5,
+      metalness: 0.1
+    });
+    const earth = new THREE.Mesh(earthGeo, earthMat);
+    earth.position.set(18, -6, -10);
+    earth.rotation.z = Math.PI * 0.12; // Earth 23.5 degree axial tilt
+    scene.add(earth);
+
+    // Earth Atmosphere Sheen
+    const earthAtmosGeo = new THREE.SphereGeometry(3.95, 32, 32);
+    const earthAtmosMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.25,
+      side: THREE.BackSide
+    });
+    const earthAtmos = new THREE.Mesh(earthAtmosGeo, earthAtmosMat);
+    earth.add(earthAtmos);
+
+    // 3. REAL 3D SATURN WITH PLANETARY RINGS
+    const saturnGroup = new THREE.Group();
+    const saturnGeo = new THREE.SphereGeometry(4.2, 48, 48);
+    const saturnMat = new THREE.MeshStandardMaterial({
+      map: saturnTexture,
+      roughness: 0.7
+    });
+    const saturn = new THREE.Mesh(saturnGeo, saturnMat);
+    saturnGroup.add(saturn);
+
+    // Realistic Saturn Ring Plane
+    const ringGeo = new THREE.RingGeometry(5.2, 9.5, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+      map: saturnRingTexture,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2.2;
+    saturnGroup.add(ring);
+
+    saturnGroup.position.set(-18, -12, -15);
+    saturnGroup.rotation.z = Math.PI * 0.18;
+    scene.add(saturnGroup);
+
+    // 4. REAL 3D JUPITER (Gas Giant)
+    const jupiterGeo = new THREE.SphereGeometry(4.8, 48, 48);
+    const jupiterMat = new THREE.MeshStandardMaterial({
+      map: jupiterTexture,
+      roughness: 0.8
+    });
+    const jupiter = new THREE.Mesh(jupiterGeo, jupiterMat);
+    jupiter.position.set(24, 12, -22);
+    scene.add(jupiter);
+
+    // 5. Starfield & Cosmic Dust (3000 Stars & Galaxies)
+    const starCount = window.innerWidth < 768 ? 1400 : 3200;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
 
-    const starPalette = [
+    const starColorsList = [
       new THREE.Color('#ffffff'), // White
-      new THREE.Color('#38bdf8'), // Ice Blue
-      new THREE.Color('#34d399'), // Emerald Mint
-      new THREE.Color('#fbbf24'), // Warm Gold
-      new THREE.Color('#818cf8')  // Soft Azure
+      new THREE.Color('#bae6fd'), // Ice Cyan
+      new THREE.Color('#fef08a'), // Solar Yellow
+      new THREE.Color('#f472b6'), // Nebula Pink
+      new THREE.Color('#67e8f9')  // Azure Blue
     ];
 
     for (let i = 0; i < starCount; i++) {
-      starPositions[i * 3] = (Math.random() - 0.5) * 160;
-      starPositions[i * 3 + 1] = (Math.random() - 0.5) * 160;
-      starPositions[i * 3 + 2] = (Math.random() - 0.5) * 140;
+      starPositions[i * 3] = (Math.random() - 0.5) * 180;
+      starPositions[i * 3 + 1] = (Math.random() - 0.5) * 180;
+      starPositions[i * 3 + 2] = (Math.random() - 0.5) * 150;
 
-      const col = starPalette[Math.floor(Math.random() * starPalette.length)];
-      starColors[i * 3] = col.r;
-      starColors[i * 3 + 1] = col.g;
-      starColors[i * 3 + 2] = col.b;
+      const c = starColorsList[Math.floor(Math.random() * starColorsList.length)];
+      starColors[i * 3] = c.r;
+      starColors[i * 3 + 1] = c.g;
+      starColors[i * 3 + 2] = c.b;
     }
 
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
@@ -79,9 +272,8 @@ export const ThreeBackground: React.FC = () => {
     const starMat = new THREE.PointsMaterial({
       size: 0.65,
       vertexColors: true,
-      map: starTexture,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.8,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
@@ -89,116 +281,13 @@ export const ThreeBackground: React.FC = () => {
     const starField = new THREE.Points(starGeo, starMat);
     scene.add(starField);
 
-    // 2. 3D Spiral Galaxy Arms (Cosmic Dust Particles)
-    const galaxyCount = window.innerWidth < 768 ? 1800 : 4000;
-    const galaxyGeo = new THREE.BufferGeometry();
-    const galaxyPos = new Float32Array(galaxyCount * 3);
-    const galaxyColors = new Float32Array(galaxyCount * 3);
+    // Lights
+    const sunLight = new THREE.PointLight(0xfffbe8, 3, 200);
+    sunLight.position.copy(sun.position);
+    scene.add(sunLight);
 
-    const arms = 3;
-    const radius = 24;
-
-    for (let i = 0; i < galaxyCount; i++) {
-      const r = Math.pow(Math.random(), 2) * radius;
-      const spinAngle = r * 0.8;
-      const branchAngle = ((i % arms) * (2 * Math.PI)) / arms;
-
-      const randomX = (Math.random() - 0.5) * (r * 0.3);
-      const randomY = (Math.random() - 0.5) * (r * 0.3);
-      const randomZ = (Math.random() - 0.5) * (r * 0.3);
-
-      galaxyPos[i * 3] = Math.cos(branchAngle + spinAngle) * r + randomX;
-      galaxyPos[i * 3 + 1] = randomY;
-      galaxyPos[i * 3 + 2] = Math.sin(branchAngle + spinAngle) * r + randomZ;
-
-      // Color gradient from bright cyan core to emerald edge
-      const mixRatio = r / radius;
-      const coreColor = new THREE.Color('#38bdf8');
-      const edgeColor = new THREE.Color('#10b981');
-      coreColor.lerp(edgeColor, mixRatio);
-
-      galaxyColors[i * 3] = coreColor.r;
-      galaxyColors[i * 3 + 1] = coreColor.g;
-      galaxyColors[i * 3 + 2] = coreColor.b;
-    }
-
-    galaxyGeo.setAttribute('position', new THREE.BufferAttribute(galaxyPos, 3));
-    galaxyGeo.setAttribute('color', new THREE.BufferAttribute(galaxyColors, 3));
-
-    const galaxyMat = new THREE.PointsMaterial({
-      size: 0.5,
-      vertexColors: true,
-      map: starTexture,
-      transparent: true,
-      opacity: 0.75,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-
-    const galaxy = new THREE.Points(galaxyGeo, galaxyMat);
-    galaxy.position.set(-8, 4, -15);
-    galaxy.rotation.x = Math.PI * 0.25;
-    scene.add(galaxy);
-
-    // 3. 3D Ringed Planet (Saturn-like Celestial Body)
-    const planetGroup = new THREE.Group();
-    
-    // Planet Sphere
-    const planetGeo = new THREE.SphereGeometry(3.5, 32, 32);
-    const planetMat = new THREE.MeshStandardMaterial({
-      color: 0x0f766e, // Deep Emerald Teal
-      roughness: 0.6,
-      metalness: 0.2,
-      wireframe: true
-    });
-    const planet = new THREE.Mesh(planetGeo, planetMat);
-    planetGroup.add(planet);
-
-    // Planetary Rings
-    const ringGeo = new THREE.RingGeometry(4.8, 7.5, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.4,
-      wireframe: true
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2.3;
-    planetGroup.add(ring);
-
-    planetGroup.position.set(18, -8, -12);
-    planetGroup.rotation.z = Math.PI * 0.15;
-    scene.add(planetGroup);
-
-    // 4. Secondary Gas Giant Planet
-    const gasGiantGeo = new THREE.SphereGeometry(2.5, 24, 24);
-    const gasGiantMat = new THREE.MeshBasicMaterial({
-      color: 0x0284c7, // Azure Cyan
-      wireframe: true,
-      transparent: true,
-      opacity: 0.35
-    });
-    const gasGiant = new THREE.Mesh(gasGiantGeo, gasGiantMat);
-    gasGiant.position.set(-22, -12, -18);
-    scene.add(gasGiant);
-
-    // Orbiting Moon
-    const moonGeo = new THREE.SphereGeometry(0.6, 16, 16);
-    const moonMat = new THREE.MeshBasicMaterial({
-      color: 0xf59e0b,
-      wireframe: true
-    });
-    const moon = new THREE.Mesh(moonGeo, moonMat);
-    scene.add(moon);
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0x38bdf8, 2);
-    dirLight.position.set(10, 20, 15);
-    scene.add(dirLight);
 
     // Mouse & Scroll Parallax Tracking
     let mouseX = 0;
@@ -208,8 +297,8 @@ export const ThreeBackground: React.FC = () => {
     let scrollY = 0;
 
     const handleMouseMove = (event: MouseEvent) => {
-      mouseX = (event.clientX - window.innerWidth / 2) * 0.0018;
-      mouseY = (event.clientY - window.innerHeight / 2) * 0.0018;
+      mouseX = (event.clientX - window.innerWidth / 2) * 0.0016;
+      mouseY = (event.clientY - window.innerHeight / 2) * 0.0016;
     };
 
     const handleScroll = () => {
@@ -241,20 +330,15 @@ export const ThreeBackground: React.FC = () => {
       camera.position.y = -targetY * 18 - scrollY * 0.25;
       camera.lookAt(scene.position);
 
-      // Rotate Stars & Galaxy
-      starField.rotation.y = elapsedTime * 0.012;
-      galaxy.rotation.z = elapsedTime * 0.025;
+      // Rotate Planets on their Axes
+      sun.rotation.y = elapsedTime * 0.02;
+      earth.rotation.y = elapsedTime * 0.12;
+      jupiter.rotation.y = elapsedTime * 0.09;
+      saturn.rotation.y = elapsedTime * 0.08;
+      saturnGroup.rotation.y = elapsedTime * 0.03;
 
-      // Rotate Planets
-      planet.rotation.y = elapsedTime * 0.1;
-      planetGroup.rotation.y = elapsedTime * 0.05;
-      gasGiant.rotation.y = elapsedTime * 0.08;
-
-      // Orbit Moon around Saturn planet
-      const moonOrbitRadius = 8;
-      moon.position.x = planetGroup.position.x + Math.cos(elapsedTime * 0.8) * moonOrbitRadius;
-      moon.position.z = planetGroup.position.z + Math.sin(elapsedTime * 0.8) * moonOrbitRadius;
-      moon.position.y = planetGroup.position.y + Math.sin(elapsedTime * 0.4) * 2;
+      // Slow background starfield drift
+      starField.rotation.y = elapsedTime * 0.008;
 
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(animate);
@@ -272,19 +356,23 @@ export const ThreeBackground: React.FC = () => {
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
-      starGeo.dispose();
-      starMat.dispose();
-      galaxyGeo.dispose();
-      galaxyMat.dispose();
-      planetGeo.dispose();
-      planetMat.dispose();
+      sunGeo.dispose();
+      sunMat.dispose();
+      earthGeo.dispose();
+      earthMat.dispose();
+      saturnGeo.dispose();
+      saturnMat.dispose();
       ringGeo.dispose();
       ringMat.dispose();
-      gasGiantGeo.dispose();
-      gasGiantMat.dispose();
-      moonGeo.dispose();
-      moonMat.dispose();
-      starTexture.dispose();
+      jupiterGeo.dispose();
+      jupiterMat.dispose();
+      starGeo.dispose();
+      starMat.dispose();
+      sunTexture.dispose();
+      earthTexture.dispose();
+      jupiterTexture.dispose();
+      saturnTexture.dispose();
+      saturnRingTexture.dispose();
       renderer.dispose();
     };
   }, []);
