@@ -27,7 +27,15 @@ export const ProfileView: React.FC = () => {
   const [editName, setEditName] = useState(currentUser.name);
   const [editEmail, setEditEmail] = useState(currentUser.email || '');
   const [editBio, setEditBio] = useState(currentUser.bio);
-  const [editInterests, setEditInterests] = useState(currentUser.interests.join(', '));
+  const [editInterests, setEditInterests] = useState(currentUser.interests ? currentUser.interests.join(', ') : '');
+
+  // Keep local edit form state strictly in sync with active user profile
+  React.useEffect(() => {
+    setEditName(currentUser.name);
+    setEditEmail(currentUser.email || '');
+    setEditBio(currentUser.bio);
+    setEditInterests(currentUser.interests ? currentUser.interests.join(', ') : '');
+  }, [currentUser, isEditing]);
 
   const hostedActivities = activities.filter(a => a.hostId === currentUser.id);
   const joinedActivities = activities.filter(a => a.participants.some(p => p.userId === currentUser.id));
