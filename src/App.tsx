@@ -14,6 +14,7 @@ import { ChatView } from './components/chat/ChatView';
 import { ConnectionsView } from './components/connections/ConnectionsView';
 import { NotificationSettingsView } from './components/settings/NotificationSettingsView';
 import { HangoutFeedbackModal } from './components/activity/HangoutFeedbackModal';
+import { EditProfileModal } from './components/profile/EditProfileModal';
 import { ThreeBackground } from './components/common/ThreeBackground';
 import { MessageSquare, Users } from 'lucide-react';
 import { Activity } from './types';
@@ -162,6 +163,7 @@ export const AppContent: React.FC = () => {
         />
       )}
       <CreateActivityModal />
+      <EditProfileModal />
       <SafetyModal />
       <NotificationDrawer />
 

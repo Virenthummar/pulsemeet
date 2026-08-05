@@ -43,6 +43,8 @@ interface AppContextType {
   isSafetyModalOpen: boolean;
   isVerificationModalOpen: boolean;
   isNotificationDrawerOpen: boolean;
+  isEditProfileModalOpen: boolean;
+  setIsEditProfileModalOpen: (open: boolean) => void;
   userLocation: { lat: number; lng: number; label: string };
   theme: 'dark' | 'light';
   toggleTheme: () => void;
@@ -168,6 +170,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY + '_theme');
@@ -872,6 +875,8 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
       setIsSafetyModalOpen,
       setIsVerificationModalOpen,
       setIsNotificationDrawerOpen,
+      isEditProfileModalOpen,
+      setIsEditProfileModalOpen,
       setUserLocation,
       switchUser,
       createCustomUser,

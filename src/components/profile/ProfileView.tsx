@@ -19,7 +19,16 @@ import { ActivityCard } from '../activity/ActivityCard';
 import { AvatarUploader } from './AvatarUploader';
 
 export const ProfileView: React.FC = () => {
-  const { currentUser, activities, reviews, setIsVerificationModalOpen, setSelectedActivityId, updateUserProfile, deleteUserProfile } = useApp();
+  const { 
+    currentUser, 
+    activities, 
+    reviews, 
+    setIsVerificationModalOpen, 
+    setSelectedActivityId, 
+    setIsEditProfileModalOpen,
+    updateUserProfile,
+    deleteUserProfile
+  } = useApp();
   const [activeTab, setActiveTab] = useState<'hosted' | 'joined' | 'reviews'>('hosted');
   const [isEditing, setIsEditing] = useState(false);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
@@ -118,14 +127,11 @@ export const ProfileView: React.FC = () => {
           </div>
 
           <button
-            onClick={() => {
-              if (isEditing) setIsEditing(false);
-              else startEditing();
-            }}
-            className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+            onClick={() => setIsEditProfileModalOpen(true)}
+            className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors shadow-sm"
           >
             <Edit3 className="h-3.5 w-3.5" />
-            <span>{isEditing ? 'Cancel Edit' : 'Edit Profile'}</span>
+            <span>Edit Profile</span>
           </button>
 
         </div>
