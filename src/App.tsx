@@ -58,9 +58,10 @@ export const AppContent: React.FC = () => {
       {/* 3D Interactive Three.js Background */}
       <ThreeBackground />
 
-      {/* Ambient Radial Mesh Glows */}
-      <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none z-0 animate-pulse-glow" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-pink-600/15 rounded-full blur-[140px] pointer-events-none z-0 animate-pulse-glow" style={{ animationDelay: '2s' }} />
+      {/* Rich Multi-Color Ambient Radial Glows */}
+      <div className="fixed top-[-10%] left-[-10%] w-[55vw] h-[55vw] bg-purple-600/20 rounded-full blur-[150px] pointer-events-none z-0 animate-pulse-glow" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[55vw] h-[55vw] bg-cyan-600/20 rounded-full blur-[150px] pointer-events-none z-0 animate-pulse-glow" style={{ animationDelay: '2s' }} />
+      <div className="fixed top-[40%] right-[20%] w-[35vw] h-[35vw] bg-pink-600/15 rounded-full blur-[140px] pointer-events-none z-0 animate-pulse-glow" style={{ animationDelay: '4s' }} />
 
       {/* Top Header Navbar */}
       <div className="relative z-20">

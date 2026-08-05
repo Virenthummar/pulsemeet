@@ -10,7 +10,7 @@
   }
 
   html.dark body {
-    background-color: #020617;
+    background-color: #030712; /* Deep Midnight Charcoal */
     color: #f8fafc;
     color-scheme: dark;
   }
@@ -22,43 +22,45 @@
   }
 }
 
-/* Glassmorphism & Modern Utility Classes */
+/* Glassmorphism & High-Contrast Cyberpunk Palette */
 .glass-panel {
   background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
 }
 
 html.light .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(17, 24, 39, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 10px 35px 0 rgba(0, 0, 0, 0.45);
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.25), 0 0 20px 0 rgba(236, 72, 153, 0.15);
-  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(236, 72, 153, 0.5);
+  box-shadow: 0 15px 45px 0 rgba(139, 92, 246, 0.3), 0 0 25px 0 rgba(6, 182, 212, 0.2);
+  transform: translateY(-5px) scale(1.015);
 }
 
 html.light .glass-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
 }
 
 html.light .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 20px 30px -10px rgba(99, 102, 241, 0.15);
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 20px 35px -10px rgba(139, 92, 246, 0.2);
 }
 
 /* 3D Tilt Hover Transform */
@@ -69,7 +71,7 @@ html.light .glass-card:hover {
 }
 
 .card-3d:hover {
-  transform: translateY(-6px) rotateX(2deg) rotateY(-1deg);
+  transform: translateY(-6px) rotateX(2.5deg) rotateY(-1.5deg);
 }
 
 /* Glow Border & Shimmer Animations */
@@ -83,12 +85,12 @@ html.light .glass-card:hover {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(236, 72, 153, 0.6), rgba(59, 130, 246, 0.6));
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.7), rgba(236, 72, 153, 0.7), rgba(6, 182, 212, 0.7));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.6;
   transition: opacity 0.3s ease;
 }
 
@@ -103,8 +105,8 @@ html.light .glass-card:hover {
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.4; filter: blur(20px); }
-  50% { opacity: 0.8; filter: blur(30px); }
+  0%, 100% { opacity: 0.5; filter: blur(25px); }
+  50% { opacity: 0.9; filter: blur(35px); }
 }
 
 .animate-float {
@@ -192,44 +194,20 @@ html.light textarea::placeholder {
   color: #94a3b8 !important;
 }
 
-/* Custom Leaflet Dark Popup Styles */
-.leaflet-popup-content-wrapper {
-  background: #0f172a !important;
-  color: #f8fafc !important;
-  border-radius: 16px !important;
-  border: 1px solid rgba(51, 65, 85, 0.8) !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
-  padding: 4px !important;
-}
-
-html.light .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-}
-
-.leaflet-popup-tip {
-  background: #0f172a !important;
-}
-
-html.light .leaflet-popup-tip {
-  background: #ffffff !important;
-}
-
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(3, 7, 18, 0.8);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.5);
+  background: linear-gradient(180deg, #8b5cf6, #ec4899);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.8);
+  background: linear-gradient(180deg, #a855f7, #f472b6);
 }
 
 /* Hide scrollbar for category pills */
