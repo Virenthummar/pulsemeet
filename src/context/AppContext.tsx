@@ -57,7 +57,7 @@ interface AppContextType {
   setUserLocation: (loc: { lat: number; lng: number; label: string }) => void;
   
   switchUser: (userId: string) => void;
-  createCustomUser: (name: string, bio: string, interestsStr: string, customAvatar?: string) => void;
+  createCustomUser: (name: string, bio: string, interestsStr: string, customAvatar?: string, customEmail?: string) => void;
   createActivity: (newActData: Omit<Activity, 'id' | 'hostId' | 'hostName' | 'hostAvatar' | 'hostVerified' | 'hostRating' | 'participants' | 'waitlist' | 'createdAt' | 'status'>) => void;
   joinActivity: (activityId: string) => void;
   leaveActivity: (activityId: string) => void;
@@ -395,11 +395,11 @@ const API_BASE_URL = window.location.origin.includes('localhost') ? 'http://loca
   };
 
   // Create a brand new custom User profile dynamically
-  const createCustomUser = (name: string, bio: string, interestsStr: string, customAvatar?: string) => {
+  const createCustomUser = (name: string, bio: string, interestsStr: string, customAvatar?: string, customEmail?: string) => {
     const newUser: User = {
       id: `usr_${Date.now()}`,
       name: name.trim() || 'New Explorer',
-      email: `${name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+      email: customEmail?.trim() || `${name.toLowerCase().replace(/\s+/g, '')}@example.com`,
       bio: bio.trim() || 'Excited to discover nearby activities and make new friends!',
       avatar: customAvatar || getRandomAvatar(),
       interests: interestsStr.split(',').map(i => i.trim()).filter(Boolean),

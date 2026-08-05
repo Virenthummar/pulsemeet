@@ -52,7 +52,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
       name.trim(),
       bio.trim() || 'Excited to explore nearby activities and meet new friends!',
       selectedInterests.join(', '),
-      selectedAvatar
+      selectedAvatar,
+      email
     );
 
     if (onClose) onClose();
