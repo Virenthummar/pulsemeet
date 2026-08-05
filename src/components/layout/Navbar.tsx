@@ -62,6 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserBio, setNewUserBio] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -78,10 +79,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
   const handleCreateNewUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserName.trim()) return;
-    createCustomUser(newUserName, newUserBio, 'Walking, Sports, Games');
+    createCustomUser(newUserName, newUserBio, 'Walking, Sports, Games', undefined, newUserEmail);
     setShowAddUser(false);
     setIsUserMenuOpen(false);
     setNewUserName('');
+    setNewUserEmail('');
     setNewUserBio('');
   };
 
@@ -315,6 +317,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
                         placeholder="Your Name..."
                         value={newUserName}
                         onChange={(e) => setNewUserName(e.target.value)}
+                        className="w-full bg-slate-900 text-slate-200 p-2 rounded-lg text-xs border border-slate-700 focus:outline-none"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email (e.g. druv@gmail.com)..."
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
                         className="w-full bg-slate-900 text-slate-200 p-2 rounded-lg text-xs border border-slate-700 focus:outline-none"
                       />
                       <input

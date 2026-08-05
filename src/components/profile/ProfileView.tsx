@@ -127,11 +127,18 @@ export const ProfileView: React.FC = () => {
           </div>
 
           <button
-            onClick={() => setIsEditProfileModalOpen(true)}
+            onClick={() => {
+              if (isEditing) {
+                setIsEditing(false);
+              } else {
+                startEditing();
+                setIsEditProfileModalOpen(true);
+              }
+            }}
             className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors shadow-sm"
           >
             <Edit3 className="h-3.5 w-3.5" />
-            <span>Edit Profile</span>
+            <span>{isEditing ? 'Cancel Edit' : 'Edit Profile'}</span>
           </button>
 
         </div>
