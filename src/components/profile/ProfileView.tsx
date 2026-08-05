@@ -29,13 +29,13 @@ export const ProfileView: React.FC = () => {
   const [editBio, setEditBio] = useState(currentUser.bio);
   const [editInterests, setEditInterests] = useState(currentUser.interests ? currentUser.interests.join(', ') : '');
 
-  // Keep local edit form state strictly in sync with active user profile
-  React.useEffect(() => {
+  const startEditing = () => {
     setEditName(currentUser.name);
     setEditEmail(currentUser.email || '');
     setEditBio(currentUser.bio);
     setEditInterests(currentUser.interests ? currentUser.interests.join(', ') : '');
-  }, [currentUser, isEditing]);
+    setIsEditing(true);
+  };
 
   const hostedActivities = activities.filter(a => a.hostId === currentUser.id);
   const joinedActivities = activities.filter(a => a.participants.some(p => p.userId === currentUser.id));
@@ -118,7 +118,10 @@ export const ProfileView: React.FC = () => {
           </div>
 
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => {
+              if (isEditing) setIsEditing(false);
+              else startEditing();
+            }}
             className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
           >
             <Edit3 className="h-3.5 w-3.5" />
