@@ -25,6 +25,7 @@ export const ProfileView: React.FC = () => {
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
 
   const [editName, setEditName] = useState(currentUser.name);
+  const [editEmail, setEditEmail] = useState(currentUser.email || '');
   const [editBio, setEditBio] = useState(currentUser.bio);
   const [editInterests, setEditInterests] = useState(currentUser.interests.join(', '));
 
@@ -36,6 +37,7 @@ export const ProfileView: React.FC = () => {
     e.preventDefault();
     updateUserProfile({
       name: editName,
+      email: editEmail,
       bio: editBio,
       interests: editInterests.split(',').map(i => i.trim()).filter(Boolean)
     });
@@ -144,6 +146,16 @@ export const ProfileView: React.FC = () => {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
+                className="w-full bg-slate-800 text-slate-200 p-2.5 rounded-xl border border-slate-700 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-300">Email Address</label>
+              <input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
                 className="w-full bg-slate-800 text-slate-200 p-2.5 rounded-xl border border-slate-700 focus:outline-none focus:border-indigo-500"
               />
             </div>
