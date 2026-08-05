@@ -327,7 +327,7 @@ export const ThreeBackground: React.FC = () => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
-    // Mouse & Scroll Parallax Tracking
+    // Mouse & Scroll & Mobile Gyroscope Tracking
     let mouseX = 0;
     let mouseY = 0;
     let targetX = 0;
@@ -337,6 +337,18 @@ export const ThreeBackground: React.FC = () => {
     const handleMouseMove = (event: MouseEvent) => {
       mouseX = (event.clientX - window.innerWidth / 2) * 0.0016;
       mouseY = (event.clientY - window.innerHeight / 2) * 0.0016;
+    };
+
+    const handleDeviceOrientation = (event: DeviceOrientationEvent) => {
+      if (event.gamma !== null && event.beta !== null) {
+        // gamma: tilt left/right [-45, 45]
+        // beta: tilt front/back [-45, 45] (centered around 45deg holding angle)
+        const normGamma = Math.max(-45, Math.min(45, event.gamma)) / 45;
+        const normBeta = Math.max(-45, Math.min(45, event.beta - 45)) / 45;
+
+        mouseX = normGamma * 0.6;
+        mouseY = normBeta * 0.6;
+      }
     };
 
     const handleScroll = () => {
@@ -350,6 +362,7 @@ export const ThreeBackground: React.FC = () => {
     };
 
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('deviceorientation', handleDeviceOrientation);
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
 
@@ -388,6 +401,7 @@ export const ThreeBackground: React.FC = () => {
     // Cleanup
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('deviceorientation', handleDeviceOrientation);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
