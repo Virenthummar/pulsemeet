@@ -94,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
           ? 'glass-panel max-w-6xl mx-auto border border-indigo-500/40 shadow-[0_20px_50px_rgba(99,102,241,0.3)] backdrop-blur-2xl transform hover:scale-[1.005]'
           : 'glass-panel border-b border-slate-800/80 shadow-2xl'
       }`}>
-        <div className="h-[2px] w-full bg-gradient-to-r from-indigo-500 via-pink-500 to-cyan-500 animate-pulse-glow" />
+        <div className="h-[2px] w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-pulse-glow" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           

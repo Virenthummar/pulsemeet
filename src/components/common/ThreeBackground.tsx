@@ -28,18 +28,18 @@ export const ThreeBackground: React.FC = () => {
     renderer.domElement.style.zIndex = '0';
     container.appendChild(renderer.domElement);
 
-    // 1. Vibrant Multi-Color Particle Constellation
+    // 1. Oceanic Emerald & Electric Azure Particle Palette (NO PURPLE)
     const particleCount = window.innerWidth < 768 ? 500 : 1100;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
-    // Vibrant Electric Neon Color Palette
+    // Emerald, Cyan, Azure Blue, Amber Palette
     const palette = [
-      new THREE.Color('#8b5cf6'), // Electric Violet
-      new THREE.Color('#ec4899'), // Hot Pink
-      new THREE.Color('#06b6d4'), // Neon Cyan
       new THREE.Color('#10b981'), // Emerald Green
+      new THREE.Color('#06b6d4'), // Neon Cyan
+      new THREE.Color('#3b82f6'), // Electric Azure Blue
+      new THREE.Color('#14b8a6'), // Teal
       new THREE.Color('#f59e0b')  // Amber Gold
     ];
 
@@ -57,7 +57,7 @@ export const ThreeBackground: React.FC = () => {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    // Particle Glow Texture
+    // Particle Texture
     const canvas = document.createElement('canvas');
     canvas.width = 16;
     canvas.height = 16;
@@ -85,11 +85,11 @@ export const ThreeBackground: React.FC = () => {
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    // 2. Floating Glowing 3D Geometries
-    // Neon Torus Knot
+    // 2. Floating 3D Geometries
+    // Emerald Torus Knot
     const torusKnotGeo = new THREE.TorusKnotGeometry(4.5, 1.4, 120, 16);
     const torusKnotMat = new THREE.MeshBasicMaterial({
-      color: 0xa855f7, // Purple glow
+      color: 0x10b981, // Emerald glow
       wireframe: true,
       transparent: true,
       opacity: 0.22
@@ -98,7 +98,7 @@ export const ThreeBackground: React.FC = () => {
     torusKnot.position.set(-20, 12, -12);
     scene.add(torusKnot);
 
-    // Neon Cyan Icosahedron
+    // Cyan Icosahedron
     const icoGeo = new THREE.IcosahedronGeometry(5.5, 1);
     const icoMat = new THREE.MeshBasicMaterial({
       color: 0x06b6d4, // Cyan glow
@@ -110,10 +110,10 @@ export const ThreeBackground: React.FC = () => {
     icosahedron.position.set(22, -14, -14);
     scene.add(icosahedron);
 
-    // Emerald Octahedron
+    // Azure Octahedron
     const octGeo = new THREE.OctahedronGeometry(4, 0);
     const octMat = new THREE.MeshBasicMaterial({
-      color: 0x10b981, // Emerald glow
+      color: 0x3b82f6, // Azure blue glow
       wireframe: true,
       transparent: true,
       opacity: 0.22

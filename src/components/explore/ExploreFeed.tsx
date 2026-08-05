@@ -66,7 +66,7 @@ export const ExploreFeed: React.FC<ExploreFeedProps> = ({ onSelectActivity }) =>
               <span>Hyperlocal Meetups & Activities</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
-              Discover <span className="bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">Real People & Local Vibes</span>
+              Discover <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Real People & Local Vibes</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl">
               Connect with verified hosts and join spontaneous walks, games, sports, or coffee hangouts happening near you right now.
@@ -75,7 +75,7 @@ export const ExploreFeed: React.FC<ExploreFeedProps> = ({ onSelectActivity }) =>
           <div className="flex-shrink-0">
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-xl shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm"
             >
               <Sparkles className="h-4 w-4" />
               <span>Host an Activity</span>
