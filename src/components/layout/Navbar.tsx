@@ -91,27 +91,27 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
     }`}>
       <div className={`transition-all duration-500 rounded-2xl overflow-hidden ${
         isScrolled
-          ? 'glass-panel max-w-6xl mx-auto border border-indigo-500/40 shadow-[0_20px_50px_rgba(99,102,241,0.3)] backdrop-blur-2xl transform hover:scale-[1.005]'
+          ? 'glass-panel max-w-6xl mx-auto border border-amber-500/40 shadow-[0_20px_50px_rgba(245,158,11,0.25)] backdrop-blur-2xl transform hover:scale-[1.005]'
           : 'glass-panel border-b border-slate-800/80 shadow-2xl'
       }`}>
-        <div className="h-[2px] w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 animate-pulse-glow" />
+        <div className="h-[2px] w-full bg-gradient-to-r from-amber-400 via-rose-500 to-indigo-500 animate-pulse-glow" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
           {/* Logo & Dynamic City Location Selector */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentTab('explore')}>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-0.5 shadow-md shadow-indigo-500/20">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-500 p-0.5 shadow-md shadow-amber-500/20">
                 <div className="h-full w-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                  <Compass className="h-6 w-6 text-indigo-400 animate-pulse-slow" />
+                  <Compass className="h-6 w-6 text-amber-400 animate-pulse-slow" />
                 </div>
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
+                  <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-amber-300 via-rose-300 to-indigo-200 bg-clip-text text-transparent">
                     PulseMeet
                   </span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     LIVE
                   </span>
                 </div>
@@ -202,7 +202,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
             {/* Create Activity Button */}
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="hidden sm:flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-lg shadow-indigo-600/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              className="hidden sm:flex items-center space-x-2 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-400 hover:to-rose-400 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-lg shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
               <PlusCircle className="h-4 w-4" />
               <span>Post Activity</span>
