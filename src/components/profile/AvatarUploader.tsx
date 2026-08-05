@@ -169,29 +169,41 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({ onSuccess, onCan
 
           <div className="space-y-3">
             {/* Take Photo - Opens Camera on mobile */}
-            <label className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-4 px-6 rounded-2xl transition-colors border border-slate-700/50 cursor-pointer">
+            <button 
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-4 px-6 rounded-2xl transition-colors border border-slate-700/50 cursor-pointer"
+            >
               <Camera className="h-5 w-5 text-indigo-400" />
               Take Photo
-              <input 
-                type="file" 
-                accept="image/*" 
-                capture="user"
-                onChange={handleFileChange} 
-                className="hidden" 
-              />
-            </label>
+            </button>
+            <input 
+              ref={cameraInputRef}
+              type="file" 
+              accept="image/*" 
+              capture="user"
+              onChange={handleFileChange} 
+              onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
+              className="hidden" 
+            />
 
             {/* Choose from Gallery - Opens file picker */}
-            <label className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-4 px-6 rounded-2xl transition-colors border border-slate-700/50 cursor-pointer">
+            <button 
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-4 px-6 rounded-2xl transition-colors border border-slate-700/50 cursor-pointer"
+            >
               <ImageIcon className="h-5 w-5 text-pink-400" />
               Choose from Gallery
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleFileChange} 
-                className="hidden" 
-              />
-            </label>
+            </button>
+            <input 
+              ref={fileInputRef}
+              type="file" 
+              accept="image/*" 
+              onChange={handleFileChange} 
+              onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
+              className="hidden" 
+            />
           </div>
         </div>
       </div>
