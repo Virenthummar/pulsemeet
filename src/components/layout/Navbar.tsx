@@ -63,6 +63,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserBio, setNewUserBio] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -77,9 +86,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
   };
 
   return (
-    <header className="sticky top-0 z-40 glass-panel border-b border-slate-800/80 shadow-2xl transition-all">
-      <div className="h-[2px] w-full bg-gradient-to-r from-indigo-500 via-pink-500 to-cyan-500 animate-pulse-glow" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className={`sticky top-0 z-40 transition-all duration-500 ${
+      isScrolled ? 'py-2 px-3 sm:px-6' : 'py-0 px-0'
+    }`}>
+      <div className={`transition-all duration-500 rounded-2xl overflow-hidden ${
+        isScrolled
+          ? 'glass-panel max-w-6xl mx-auto border border-indigo-500/40 shadow-[0_20px_50px_rgba(99,102,241,0.3)] backdrop-blur-2xl transform hover:scale-[1.005]'
+          : 'glass-panel border-b border-slate-800/80 shadow-2xl'
+      }`}>
+        <div className="h-[2px] w-full bg-gradient-to-r from-indigo-500 via-pink-500 to-cyan-500 animate-pulse-glow" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
           {/* Logo & Dynamic City Location Selector */}
@@ -322,6 +338,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab }) => 
 
         </div>
       </div>
-    </header>
+    </div>
+  </header>
   );
 };
