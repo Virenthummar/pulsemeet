@@ -30,7 +30,52 @@ export const ThreeBackground: React.FC = () => {
 
     const textureLoader = new THREE.TextureLoader();
 
-    // Helper: Create High-Res Canvas Textures if external textures fail or loading
+    // 1. High-Res Glossy Round Sparkling Star Canvas Texture with 4-Point Flare Rays
+    const createGlossyStarTexture = () => {
+      const c = document.createElement('canvas');
+      c.width = 64;
+      c.height = 64;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        // Soft Outer Radial Glow Halo
+        const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        g.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        g.addColorStop(0.2, 'rgba(224, 242, 254, 0.9)');
+        g.addColorStop(0.45, 'rgba(56, 189, 248, 0.4)');
+        g.addColorStop(0.75, 'rgba(14, 165, 233, 0.15)');
+        g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(32, 32, 32, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cross Flare Ray 1 (Horizontal)
+        const rayGradH = ctx.createLinearGradient(4, 32, 60, 32);
+        rayGradH.addColorStop(0, 'rgba(255,255,255,0)');
+        rayGradH.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+        rayGradH.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = rayGradH;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(4, 32); ctx.lineTo(60, 32); ctx.stroke();
+
+        // Cross Flare Ray 2 (Vertical)
+        const rayGradV = ctx.createLinearGradient(32, 4, 32, 60);
+        rayGradV.addColorStop(0, 'rgba(255,255,255,0)');
+        rayGradV.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+        rayGradV.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = rayGradV;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(32, 4); ctx.lineTo(32, 60); ctx.stroke();
+
+        // Intense Glossy Center Nucleus
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 32, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return new THREE.CanvasTexture(c);
+    };
+
     const createSunTexture = () => {
       const c = document.createElement('canvas');
       c.width = 512; c.height = 512;
@@ -45,7 +90,6 @@ export const ThreeBackground: React.FC = () => {
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, 512, 512);
 
-        // Solar surface flares
         for (let i = 0; i < 300; i++) {
           ctx.fillStyle = `rgba(255, 230, 150, ${Math.random() * 0.4})`;
           ctx.beginPath();
@@ -61,11 +105,9 @@ export const ThreeBackground: React.FC = () => {
       c.width = 512; c.height = 256;
       const ctx = c.getContext('2d');
       if (ctx) {
-        // Deep blue ocean
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(0, 0, 512, 256);
 
-        // Water gradients
         const g = ctx.createLinearGradient(0, 0, 512, 256);
         g.addColorStop(0, '#1e3a8a');
         g.addColorStop(0.5, '#0284c7');
@@ -73,14 +115,12 @@ export const ThreeBackground: React.FC = () => {
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, 512, 256);
 
-        // Continent landmass shapes
         ctx.fillStyle = '#15803d';
         for (let i = 0; i < 45; i++) {
           ctx.beginPath();
           ctx.ellipse(Math.random() * 512, Math.random() * 256, 20 + Math.random() * 40, 15 + Math.random() * 30, Math.random(), 0, Math.PI * 2);
           ctx.fill();
         }
-        // White cloud swirls
         ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
         for (let i = 0; i < 60; i++) {
           ctx.beginPath();
@@ -96,13 +136,11 @@ export const ThreeBackground: React.FC = () => {
       c.width = 512; c.height = 256;
       const ctx = c.getContext('2d');
       if (ctx) {
-        // Jupiter atmospheric bands
         const bandColors = ['#9a3412', '#c2410c', '#ea580c', '#fed7aa', '#78350f', '#f97316', '#fdba74', '#9a3412'];
         for (let y = 0; y < 256; y += 8) {
           ctx.fillStyle = bandColors[Math.floor((y / 256) * bandColors.length)];
           ctx.fillRect(0, y, 512, 8 + Math.random() * 4);
         }
-        // Great Red Spot
         ctx.fillStyle = '#b91c1c';
         ctx.beginPath();
         ctx.ellipse(320, 160, 35, 20, 0, 0, Math.PI * 2);
@@ -134,10 +172,10 @@ export const ThreeBackground: React.FC = () => {
       if (ctx) {
         const g = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
         g.addColorStop(0, 'rgba(0,0,0,0)');
-        g.addColorStop(0.4, 'rgba(251, 191, 36, 0.7)');
-        g.addColorStop(0.6, 'rgba(217, 119, 6, 0.8)');
-        g.addColorStop(0.75, 'rgba(180, 83, 9, 0.4)');
-        g.addColorStop(0.9, 'rgba(245, 158, 11, 0.6)');
+        g.addColorStop(0.4, 'rgba(251, 191, 36, 0.75)');
+        g.addColorStop(0.6, 'rgba(217, 119, 6, 0.85)');
+        g.addColorStop(0.75, 'rgba(180, 83, 9, 0.45)');
+        g.addColorStop(0.9, 'rgba(245, 158, 11, 0.65)');
         g.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, 256, 256);
@@ -145,14 +183,13 @@ export const ThreeBackground: React.FC = () => {
       return new THREE.CanvasTexture(c);
     };
 
-    // Textures initialization (with Canvas fallback for instant 60fps load)
+    const starTexture = createGlossyStarTexture();
     const sunTexture = createSunTexture();
     const earthTexture = createEarthTexture();
     const jupiterTexture = createJupiterTexture();
     const saturnTexture = createSaturnTexture();
     const saturnRingTexture = createSaturnRingTexture();
 
-    // Load High-Res NASA / Space Photos where available
     textureLoader.load(
       'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
       (tex) => { earthMat.map = tex; earthMat.needsUpdate = true; }
@@ -171,35 +208,35 @@ export const ThreeBackground: React.FC = () => {
     sun.position.set(-25, 14, -20);
     scene.add(sun);
 
-    // Sun Outer Corona Atmosphere Glow
-    const sunGlowGeo = new THREE.SphereGeometry(7.2, 32, 32);
+    // Sun Outer Flare Halo
+    const sunGlowGeo = new THREE.SphereGeometry(7.5, 32, 32);
     const sunGlowMat = new THREE.MeshBasicMaterial({
       color: 0xf97316,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.4,
       side: THREE.BackSide
     });
     const sunGlow = new THREE.Mesh(sunGlowGeo, sunGlowMat);
     sun.add(sunGlow);
 
-    // 2. REAL 3D EARTH (Blue Marble)
+    // 2. REAL 3D EARTH
     const earthGeo = new THREE.SphereGeometry(3.8, 48, 48);
     const earthMat = new THREE.MeshStandardMaterial({
       map: earthTexture,
-      roughness: 0.5,
-      metalness: 0.1
+      roughness: 0.4,
+      metalness: 0.2
     });
     const earth = new THREE.Mesh(earthGeo, earthMat);
     earth.position.set(18, -6, -10);
-    earth.rotation.z = Math.PI * 0.12; // Earth 23.5 degree axial tilt
+    earth.rotation.z = Math.PI * 0.12;
     scene.add(earth);
 
     // Earth Atmosphere Sheen
-    const earthAtmosGeo = new THREE.SphereGeometry(3.95, 32, 32);
+    const earthAtmosGeo = new THREE.SphereGeometry(4.0, 32, 32);
     const earthAtmosMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.3,
       side: THREE.BackSide
     });
     const earthAtmos = new THREE.Mesh(earthAtmosGeo, earthAtmosMat);
@@ -210,18 +247,17 @@ export const ThreeBackground: React.FC = () => {
     const saturnGeo = new THREE.SphereGeometry(4.2, 48, 48);
     const saturnMat = new THREE.MeshStandardMaterial({
       map: saturnTexture,
-      roughness: 0.7
+      roughness: 0.6
     });
     const saturn = new THREE.Mesh(saturnGeo, saturnMat);
     saturnGroup.add(saturn);
 
-    // Realistic Saturn Ring Plane
-    const ringGeo = new THREE.RingGeometry(5.2, 9.5, 64);
+    const ringGeo = new THREE.RingGeometry(5.2, 9.8, 64);
     const ringMat = new THREE.MeshBasicMaterial({
       map: saturnRingTexture,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.9
     });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = Math.PI / 2.2;
@@ -231,28 +267,28 @@ export const ThreeBackground: React.FC = () => {
     saturnGroup.rotation.z = Math.PI * 0.18;
     scene.add(saturnGroup);
 
-    // 4. REAL 3D JUPITER (Gas Giant)
+    // 4. REAL 3D JUPITER
     const jupiterGeo = new THREE.SphereGeometry(4.8, 48, 48);
     const jupiterMat = new THREE.MeshStandardMaterial({
       map: jupiterTexture,
-      roughness: 0.8
+      roughness: 0.7
     });
     const jupiter = new THREE.Mesh(jupiterGeo, jupiterMat);
     jupiter.position.set(24, 12, -22);
     scene.add(jupiter);
 
-    // 5. Starfield & Cosmic Dust (3000 Stars & Galaxies)
-    const starCount = window.innerWidth < 768 ? 1400 : 3200;
+    // 5. Glossy Round Starfield (3200 Round Twinkling Stars with Flare Texture)
+    const starCount = window.innerWidth < 768 ? 1500 : 3200;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
 
     const starColorsList = [
-      new THREE.Color('#ffffff'), // White
-      new THREE.Color('#bae6fd'), // Ice Cyan
+      new THREE.Color('#ffffff'), // Pure White
+      new THREE.Color('#e0f2fe'), // Ice Blue
       new THREE.Color('#fef08a'), // Solar Yellow
       new THREE.Color('#f472b6'), // Nebula Pink
-      new THREE.Color('#67e8f9')  // Azure Blue
+      new THREE.Color('#a7f3d0')  // Emerald Mint
     ];
 
     for (let i = 0; i < starCount; i++) {
@@ -269,11 +305,13 @@ export const ThreeBackground: React.FC = () => {
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
 
+    // CRITICAL: map is attached to guarantee 100% round glossy sparkling star rendering
     const starMat = new THREE.PointsMaterial({
-      size: 0.65,
+      size: 1.25,
+      map: starTexture,
       vertexColors: true,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.9,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
@@ -282,7 +320,7 @@ export const ThreeBackground: React.FC = () => {
     scene.add(starField);
 
     // Lights
-    const sunLight = new THREE.PointLight(0xfffbe8, 3, 200);
+    const sunLight = new THREE.PointLight(0xfffbe8, 3.5, 200);
     sunLight.position.copy(sun.position);
     scene.add(sunLight);
 
@@ -337,8 +375,9 @@ export const ThreeBackground: React.FC = () => {
       saturn.rotation.y = elapsedTime * 0.08;
       saturnGroup.rotation.y = elapsedTime * 0.03;
 
-      // Slow background starfield drift
+      // Sparkling / Twinkling Star Animation
       starField.rotation.y = elapsedTime * 0.008;
+      starMat.size = 1.2 + Math.sin(elapsedTime * 2.5) * 0.2;
 
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(animate);
@@ -368,6 +407,7 @@ export const ThreeBackground: React.FC = () => {
       jupiterMat.dispose();
       starGeo.dispose();
       starMat.dispose();
+      starTexture.dispose();
       sunTexture.dispose();
       earthTexture.dispose();
       jupiterTexture.dispose();
